@@ -65,10 +65,23 @@ class LGBMClassifier:
         
         # Keep only numeric columns
         numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-        df_numeric = df[numeric_cols]
+        df_numeric = df[numeric_cols].copy()  # Use .copy() to avoid SettingWithCopyWarning
         
         # Replace NaN values with 0
         df_numeric.fillna(0, inplace=True)
+        
+        # Check if model is trained/fitted already, if so use stored feature names
+        if hasattr(self, 'feature_names_') and self.feature_names_ is not None:
+            # Keep only features that were used during training
+            common_features = list(set(numeric_cols).intersection(set(self.feature_names_)))
+            missing_features = list(set(self.feature_names_) - set(common_features))
+            
+            # Add missing columns with zeros
+            for feature in missing_features:
+                df_numeric[feature] = 0
+                
+            # Select only the original features in the correct order
+            df_numeric = df_numeric[self.feature_names_]
         
         # Check if scaler is fitted, if not, fit it
         from sklearn.utils.validation import check_is_fitted
@@ -76,11 +89,13 @@ class LGBMClassifier:
             check_is_fitted(self.scaler)
         except:
             self.scaler.fit(df_numeric)
+            # Store feature names used during fitting
+            self.feature_names_ = df_numeric.columns.tolist()
             
         # Scale numeric features
         df_scaled = self.scaler.transform(df_numeric)
         
-        return pd.DataFrame(df_scaled, columns=numeric_cols)
+        return pd.DataFrame(df_scaled, columns=df_numeric.columns)
     
     def initialize_model(self):
         """
