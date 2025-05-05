@@ -1,0 +1,56 @@
+timestamp,user_id,ip_address,action,resource,duration,bytes_transferred,login_status,location,device_type,session_count,failed_attempts,auth_method,access_level,department,risk_score
+2025-05-01 08:15:22,user001,192.168.1.102,login,vpn,120,5400,success,New York,desktop,1,0,password,standard,engineering,0.12
+2025-05-01 08:42:15,user002,192.168.1.105,login,vpn,180,6200,success,Los Angeles,laptop,1,0,password,standard,marketing,0.15
+2025-05-01 09:03:41,user003,192.168.1.103,login,vpn,150,5800,success,Chicago,desktop,1,0,password,standard,finance,0.14
+2025-05-01 09:18:33,user004,192.168.1.107,login,vpn,135,5600,success,Boston,laptop,1,0,password,standard,hr,0.13
+2025-05-01 09:25:18,user005,192.168.1.110,login,vpn,160,6000,success,Seattle,desktop,1,0,password,standard,engineering,0.15
+2025-05-01 09:32:29,user006,192.168.1.112,login,vpn,145,5700,success,San Francisco,laptop,1,0,password,standard,marketing,0.14
+2025-05-01 09:45:51,user007,192.168.1.108,login,vpn,155,5900,success,Denver,desktop,1,0,password,standard,finance,0.15
+2025-05-01 09:58:10,user008,192.168.1.115,login,vpn,140,5650,success,Atlanta,laptop,1,0,password,standard,hr,0.13
+2025-05-01 10:10:22,user001,192.168.1.102,file_access,shared_drive,45,12500,success,New York,desktop,1,0,session_token,standard,engineering,0.18
+2025-05-01 10:22:15,user002,192.168.1.105,file_access,shared_drive,35,10500,success,Los Angeles,laptop,1,0,session_token,standard,marketing,0.16
+2025-05-01 10:35:41,user003,192.168.1.103,file_access,shared_drive,40,11500,success,Chicago,desktop,1,0,session_token,standard,finance,0.17
+2025-05-01 10:48:33,user004,192.168.1.107,file_access,shared_drive,30,9500,success,Boston,laptop,1,0,session_token,standard,hr,0.15
+2025-05-01 11:05:18,user005,192.168.1.110,database_query,crm,65,18500,success,Seattle,desktop,1,0,session_token,standard,engineering,0.20
+2025-05-01 11:13:29,user006,192.168.1.112,database_query,crm,60,17500,success,San Francisco,laptop,1,0,session_token,standard,marketing,0.19
+2025-05-01 11:27:51,user007,192.168.1.108,database_query,crm,70,19500,success,Denver,desktop,1,0,session_token,standard,finance,0.21
+2025-05-01 11:42:10,user008,192.168.1.115,database_query,crm,55,16500,success,Atlanta,laptop,1,0,session_token,standard,hr,0.18
+2025-05-01 12:05:42,user009,10.0.0.12,login,vpn,10,4200,success,Unknown,desktop,5,0,password,admin,it,0.45
+2025-05-01 12:08:19,user009,10.0.0.12,file_access,hr_records,5,25000,success,Unknown,desktop,5,0,session_token,admin,it,0.65
+2025-05-01 12:15:37,user009,10.0.0.12,database_query,financial,15,85000,success,Unknown,desktop,5,0,session_token,admin,it,0.75
+2025-05-01 12:20:55,user009,10.0.0.12,file_download,customer_data,8,125000,success,Unknown,desktop,5,0,session_token,admin,it,0.85
+2025-05-01 12:35:41,user010,172.16.0.22,login,vpn,120,5400,success,Denver,mobile,1,0,password,standard,sales,0.22
+2025-05-01 12:58:55,user010,172.16.0.22,login,email,15,3200,success,Denver,mobile,2,0,session_token,standard,sales,0.25
+2025-05-01 13:12:08,user010,172.16.0.22,login,crm,20,3800,failed,Denver,mobile,2,1,session_token,standard,sales,0.35
+2025-05-01 13:15:26,user010,172.16.0.22,login,crm,18,3600,failed,Denver,mobile,2,2,session_token,standard,sales,0.45
+2025-05-01 13:18:41,user010,172.16.0.22,login,crm,15,3400,failed,Denver,mobile,2,3,session_token,standard,sales,0.55
+2025-05-01 13:22:03,user010,172.16.0.22,login,crm,12,3200,success,Denver,mobile,3,3,password,standard,sales,0.60
+2025-05-01 13:25:19,user010,172.16.0.22,file_access,sales_reports,25,7500,success,Denver,mobile,3,3,session_token,standard,sales,0.65
+2025-05-01 13:28:36,user010,172.16.0.22,database_query,customer_records,30,9500,success,Denver,mobile,3,3,session_token,standard,sales,0.70
+2025-05-01 13:41:49,user001,192.168.1.102,logout,vpn,5,1200,success,New York,desktop,1,0,session_token,standard,engineering,0.12
+2025-05-01 13:55:23,user002,192.168.1.105,logout,vpn,4,1100,success,Los Angeles,laptop,1,0,session_token,standard,marketing,0.15
+2025-05-01 14:09:47,user003,192.168.1.103,logout,vpn,6,1300,success,Chicago,desktop,1,0,session_token,standard,finance,0.14
+2025-05-01 14:22:58,user004,192.168.1.107,logout,vpn,5,1200,success,Boston,laptop,1,0,session_token,standard,hr,0.13
+2025-05-01 14:38:12,user011,31.45.123.67,login,vpn,30,5000,failed,Unknown,desktop,0,1,password,standard,engineering,0.25
+2025-05-01 14:40:31,user011,31.45.123.67,login,vpn,25,4800,failed,Unknown,desktop,0,2,password,standard,engineering,0.35
+2025-05-01 14:42:49,user011,31.45.123.67,login,vpn,20,4600,failed,Unknown,desktop,0,3,password,standard,engineering,0.45
+2025-05-01 14:45:08,user011,31.45.123.67,login,vpn,15,4400,failed,Unknown,desktop,0,4,password,standard,engineering,0.55
+2025-05-01 14:47:27,user011,31.45.123.67,login,vpn,10,4200,failed,Unknown,desktop,0,5,password,standard,engineering,0.65
+2025-05-01 14:52:36,user012,185.156.73.42,login,vpn,120,5400,success,Paris,desktop,1,0,password,standard,research,0.35
+2025-05-01 15:10:49,user012,185.156.73.42,file_access,research_data,45,42000,success,Paris,desktop,1,0,session_token,standard,research,0.40
+2025-05-01 15:12:12,user012,185.156.73.42,file_download,proprietary_docs,30,85000,success,Paris,desktop,1,0,session_token,standard,research,0.55
+2025-05-01 15:15:23,user012,185.156.73.42,file_download,proprietary_docs,25,78000,success,Paris,desktop,1,0,session_token,standard,research,0.60
+2025-05-01 15:18:31,user012,185.156.73.42,file_download,proprietary_docs,20,65000,success,Paris,desktop,1,0,session_token,standard,research,0.65
+2025-05-01 15:28:42,user013,104.28.42.19,login,vpn,120,5400,success,Toronto,laptop,1,0,password,admin,executive,0.30
+2025-05-01 15:35:18,user013,104.28.42.19,database_query,financial,25,6500,success,Toronto,laptop,1,0,session_token,admin,executive,0.35
+2025-05-01 15:42:36,user013,104.28.42.19,file_access,executive_reports,30,15000,success,Toronto,laptop,1,0,session_token,admin,executive,0.40
+2025-05-01 15:55:51,user014,23.94.17.144,login,vpn,10,4200,success,Unknown,mobile,1,0,password,standard,support,0.40
+2025-05-01 16:02:10,user014,23.94.17.144,file_access,customer_records,15,25000,success,Unknown,mobile,1,0,session_token,standard,support,0.45
+2025-05-01 16:05:22,user014,23.94.17.144,database_query,support_tickets,20,8500,success,Unknown,mobile,1,0,session_token,standard,support,0.50
+2025-05-01 16:08:15,user014,23.94.17.144,file_download,support_manuals,25,95000,success,Unknown,mobile,1,0,session_token,standard,support,0.55
+2025-05-01 16:15:41,user014,23.94.17.144,file_download,support_manuals,20,85000,success,Unknown,mobile,1,0,session_token,standard,support,0.60
+2025-05-01 16:22:33,user015,88.53.129.86,login,vpn,8,4000,success,Sydney,desktop,1,0,password,standard,operations,0.25
+2025-05-01 16:25:18,user015,88.53.129.86,file_access,operations_manual,12,18000,success,Sydney,desktop,1,0,session_token,standard,operations,0.30
+2025-05-01 16:28:29,user015,88.53.129.86,database_query,inventory,15,5500,success,Sydney,desktop,1,0,session_token,standard,operations,0.35
+2025-05-01 16:32:51,user015,88.53.129.86,file_modification,operations_schedule,20,6500,success,Sydney,desktop,1,0,session_token,standard,operations,0.40
+2025-05-01 16:38:10,user015,88.53.129.86,file_upload,inventory_update,25,45000,success,Sydney,desktop,1,0,session_token,standard,operations,0.45
