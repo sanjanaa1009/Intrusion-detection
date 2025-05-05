@@ -48,8 +48,8 @@ if 'unknown_threat_results' not in st.session_state:
     st.session_state.unknown_threat_results = None
 
 # App header and description
-st.sidebar.image("https://images.unsplash.com/photo-1550751827-4bd374c3f58b", use_column_width=True)
-st.sidebar.title("CyberSentry IDS")
+st.sidebar.image("https://images.unsplash.com/photo-1563013544-824ae1b704d3", use_container_width=True)
+st.sidebar.title("CyberSentry Enterprise IDS")
 
 # Main navigation
 app_mode = st.sidebar.selectbox(
@@ -59,24 +59,30 @@ app_mode = st.sidebar.selectbox(
 
 # Display dashboard overview
 if app_mode == "Dashboard":
-    st.title("CyberSentry: Advanced Intrusion Detection System")
+    st.title("CyberSentry: Enterprise-Grade Intrusion Detection System")
+    st.markdown("""
+    <div style='background-color: #1E1E1E; padding: 15px; border-radius: 5px; margin-bottom: 20px;'>
+    <p>Detect both <b>known cyberattacks</b> and <b>previously unseen anomalous behavior</b> from raw system and application logs. 
+    Providing real-time actionable insights for proactive enterprise defense.</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.image("https://images.unsplash.com/photo-1524114051012-0a2aa8dae4e1", use_column_width=True)
+        st.image("https://images.unsplash.com/photo-1558494949-ef010cbdcc31", use_container_width=True)
         st.subheader("Network Security")
-        st.write("Monitor and analyze network traffic for known and unknown threats.")
+        st.write("Monitor and analyze network traffic for known and zero-day threats.")
     
     with col2:
-        st.image("https://images.unsplash.com/photo-1617228679684-890412dc57a5", use_column_width=True)
+        st.image("https://images.unsplash.com/photo-1573164713988-8665fc963095", use_container_width=True)
         st.subheader("User Behavior Analysis")
-        st.write("Track and detect anomalies in user behavior patterns.")
+        st.write("Track and detect anomalies in enterprise user behavior patterns.")
     
     with col3:
-        st.image("https://images.unsplash.com/photo-1739112042735-6cf7a4700de4", use_column_width=True)
+        st.image("https://images.unsplash.com/photo-1639322537228-f710d846310a", use_container_width=True)
         st.subheader("Blockchain Verification")
-        st.write("Ensure log integrity with blockchain-based verification.")
+        st.write("Ensure enterprise log integrity with immutable blockchain-based verification.")
     
     st.markdown("---")
     

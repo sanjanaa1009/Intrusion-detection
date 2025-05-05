@@ -57,6 +57,13 @@ class LGBMClassifier:
         # Replace NaN values with 0
         df_numeric.fillna(0, inplace=True)
         
+        # Check if scaler is fitted, if not, fit it
+        from sklearn.utils.validation import check_is_fitted
+        try:
+            check_is_fitted(self.scaler)
+        except:
+            self.scaler.fit(df_numeric)
+            
         # Scale numeric features
         df_scaled = self.scaler.transform(df_numeric)
         
