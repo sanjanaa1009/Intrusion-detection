@@ -4,317 +4,201 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-def create_anomaly_charts(data):
+def create_threat_distribution(threats_df):
     """
-    Create visualizations for anomaly detection results
+    Create a visualization of threat distribution by attack category
     
     Parameters:
     -----------
-    data : pd.DataFrame
-        DataFrame containing anomaly detection results
+    threats_df : pd.DataFrame
+        DataFrame containing detected threats with 'attack_cat' column
         
     Returns:
     --------
-    list
-        List of plotly figures
+    fig : plotly.graph_objects.Figure
+        The plotly figure object
     """
-    charts = []
+    # Group by attack category
+    if 'attack_cat' in threats_df.columns:
+        category_col = 'attack_cat'
+    elif 'predicted_attack_cat' in threats_df.columns:
+        category_col = 'predicted_attack_cat'
+    else:
+        # Fall back to other columns that might contain categories
+        for possible_col in ['category', 'type', 'classification']:
+            if possible_col in threats_df.columns:
+                category_col = possible_col
+                break
+        else:
+            # If no suitable column is found, return empty figure
+            return go.Figure()
     
-    # Ensure data is not empty
-    if data.empty:
-        return charts
+    category_counts = threats_df[category_col].value_counts().reset_index()
+    category_counts.columns = ['Category', 'Count']
     
-    # Anomaly distribution
-    anomaly_counts = data['prediction'].value_counts().reset_index()
-    anomaly_counts.columns = ['Prediction', 'Count']
-    anomaly_counts['Prediction'] = anomaly_counts['Prediction'].apply(lambda x: 'Anomaly' if x == -1 else 'Normal')
-    
-    # Enhanced pie chart with better visualization
-    fig1 = px.pie(
-        anomaly_counts, 
-        values='Count', 
-        names='Prediction',
-        title='Anomaly Distribution',
-        color='Prediction',
-        color_discrete_map={'Normal': '#2ECC71', 'Anomaly': '#E74C3C'},
-        hole=0.6
+    # Create pie chart
+    fig = px.pie(
+        category_counts,
+        values='Count',
+        names='Category',
+        title='Threat Distribution by Category',
+        color_discrete_sequence=px.colors.qualitative.Safe,
+        hole=0.4
     )
     
-    fig1.update_layout(
-        title_font_size=22,
-        legend_title_font_size=16,
-        legend_font_size=14,
-        font=dict(family="Arial, sans-serif"),
-        title_x=0.5,
-        title_y=0.95,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=20, r=20, t=60, b=20),
-    )
-    charts.append(fig1)
-    
-    # Attack categories if available
-    if 'predicted_attack_cat' in data.columns:
-        attack_counts = data[data['prediction'] == -1]['predicted_attack_cat'].value_counts().reset_index()
-        attack_counts.columns = ['Attack Category', 'Count']
+    # Add source IP information if available
+    if 'src_ip' in threats_df.columns:
+        top_ips = threats_df['src_ip'].value_counts().head(5).reset_index()
+        top_ips.columns = ['Source IP', 'Count']
         
-        fig2 = px.bar(
-            attack_counts,
-            x='Attack Category',
+        fig_ips = px.bar(
+            top_ips,
+            x='Source IP',
             y='Count',
-            title='Attack Categories',
-            color='Attack Category',
-            color_discrete_sequence=px.colors.qualitative.Plotly
+            title='Top 5 Source IPs',
+            color='Count',
+            color_continuous_scale=px.colors.sequential.Plasma
         )
-        charts.append(fig2)
+        
+        # Update layout
+        fig.update_layout(
+            title_text='Threat Analysis',
+            annotations=[dict(text='Categories', x=0.5, y=0.5, font_size=20, showarrow=False)]
+        )
+        
+        return fig_ips
     
-    # Feature importance if possible
-    if 'dur' in data.columns and 'spkts' in data.columns:
-        normal = data[data['prediction'] == 1]
-        anomaly = data[data['prediction'] == -1]
-        
-        # Find common numeric columns
-        numeric_cols = data.select_dtypes(include=[np.number]).columns.tolist()
-        
-        # Create subplot grid
-        feature_fig = make_subplots(
-            rows=len(numeric_cols[:6])//2 + len(numeric_cols[:6])%2, 
-            cols=2,
-            subplot_titles=[col for col in numeric_cols[:6]]
-        )
-        
-        # Add histograms for each feature
-        for i, col in enumerate(numeric_cols[:6]):
-            row = i // 2 + 1
-            col_idx = i % 2 + 1
-            
-            feature_fig.add_trace(
-                go.Histogram(
-                    x=normal[col],
-                    name='Normal',
-                    opacity=0.7,
-                    marker_color='#2ECC71'
-                ),
-                row=row, col=col_idx
-            )
-            
-            feature_fig.add_trace(
-                go.Histogram(
-                    x=anomaly[col],
-                    name='Anomaly',
-                    opacity=0.7,
-                    marker_color='#E74C3C'
-                ),
-                row=row, col=col_idx
-            )
-        
-        feature_fig.update_layout(
-            title='Feature Distributions: Normal vs Anomaly',
-            barmode='overlay',
-            height=800
-        )
-        
-        charts.append(feature_fig)
-    
-    return charts
+    return fig
 
-def create_user_behavior_charts(data):
+def create_user_behavior_charts(user_df):
     """
-    Create visualizations for user behavior analysis results
+    Create visualizations for user behavior analysis
     
     Parameters:
     -----------
-    data : pd.DataFrame
-        DataFrame containing user behavior analysis results
+    user_df : pd.DataFrame
+        DataFrame containing user behavior data with 'user_id' and 'prediction' columns
         
     Returns:
     --------
-    plotly.graph_objects.Figure
-        Plotly figure for user behavior analysis
+    fig : plotly.graph_objects.Figure
+        The plotly figure object
     """
-    # Create a figure with 1x2 subplots
+    # Create subplots
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=['Enterprise User Behavior Analysis', 'Anomaly Score Distribution']
+        specs=[[{"type": "pie"}, {"type": "bar"}]],
+        subplot_titles=('Anomaly Distribution', 'Top Users by Anomaly Score')
     )
     
-    # User behavior analysis - prediction distribution
-    prediction_counts = data['prediction'].value_counts().reset_index()
-    prediction_counts.columns = ['Prediction', 'Count']
-    prediction_counts['Prediction'] = prediction_counts['Prediction'].apply(lambda x: 'Anomalous' if x == -1 else 'Normal')
-    
-    fig.add_trace(
-        go.Pie(
-            labels=prediction_counts['Prediction'],
+    # Pie chart of normal vs anomalous users
+    if 'prediction' in user_df.columns:
+        prediction_counts = user_df['prediction'].value_counts().reset_index()
+        prediction_counts.columns = ['Prediction', 'Count']
+        
+        # Map prediction values to labels
+        prediction_counts['Label'] = prediction_counts['Prediction'].map({
+            -1: 'Anomalous',
+            1: 'Normal'
+        })
+        
+        pie = go.Pie(
+            labels=prediction_counts['Label'],
             values=prediction_counts['Count'],
-            hole=0.6,
-            marker_colors=['#2ECC71', '#E74C3C'],
-            textinfo='label+percent',
-            textfont=dict(size=14),
-            insidetextorientation='radial'
-        ),
-        row=1, col=1
-    )
-    
-    # Anomaly score distribution if available
-    if 'anomaly_score' in data.columns:
-        fig.add_trace(
-            go.Histogram(
-                x=data['anomaly_score'],
-                nbinsx=20,
-                marker=dict(
-                    color='#3498DB',
-                    line=dict(color='rgba(0, 0, 0, 0.5)', width=1)
-                ),
-                opacity=0.8
-            ),
-            row=1, col=2
+            hole=0.4,
+            marker_colors=['#FF6B6B', '#4ECDC4']
         )
+        fig.add_trace(pie, row=1, col=1)
         
-        # Add vertical line at threshold (assuming negative values are anomalies)
-        fig.add_shape(
-            type="line", 
-            x0=0, y0=0, 
-            x1=0, y1=1, 
-            yref="paper",
-            line=dict(color="red", width=2, dash="dash"),
-            row=1, col=2
-        )
-        
-        fig.add_annotation(
-            x=0, y=1,
-            text="Threshold",
-            showarrow=True,
-            arrowhead=1,
-            row=1, col=2
-        )
+        # Bar chart of top anomalous users
+        if 'user_id' in user_df.columns and 'anomaly_score' in user_df.columns:
+            anomalous_users = user_df[user_df['prediction'] == -1]
+            if not anomalous_users.empty:
+                top_users = anomalous_users.sort_values('anomaly_score', ascending=True).head(5)
+                
+                bar = go.Bar(
+                    x=top_users['user_id'],
+                    y=top_users['anomaly_score'],
+                    marker_color='#FF6B6B'
+                )
+                fig.add_trace(bar, row=1, col=2)
     
+    # Update layout
     fig.update_layout(
-        height=500,
+        title_text='User Behavior Analysis',
         showlegend=False,
-        title_text="Enterprise User Behavior Analysis",
-        title_font_size=22,
-        title_x=0.5,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=20, r=20, t=60, b=20),
-        font=dict(family="Arial, sans-serif")
+        height=500
     )
     
     return fig
 
-def create_threat_distribution(data):
+def create_anomaly_charts(logs_df):
     """
-    Create visualization for threat distribution
+    Create visualizations for anomaly detection in log analysis
     
     Parameters:
     -----------
-    data : pd.DataFrame
-        DataFrame containing threat detection results
+    logs_df : pd.DataFrame
+        DataFrame containing log analysis results
         
     Returns:
     --------
-    plotly.graph_objects.Figure
-        Plotly figure for threat distribution
+    fig : plotly.graph_objects.Figure
+        The plotly figure object
     """
-    # Get attack categories
-    if 'attack_cat' in data.columns:
-        attack_col = 'attack_cat'
-    elif 'predicted_attack_cat' in data.columns:
-        attack_col = 'predicted_attack_cat'
-    else:
-        # Create a default figure
-        fig = go.Figure()
-        fig.add_annotation(
-            text="No attack category data available",
-            xref="paper", yref="paper",
-            x=0.5, y=0.5,
-            showarrow=False,
-            font=dict(size=20)
-        )
-        return fig
-    
-    # Count attack categories
-    attack_counts = data[attack_col].value_counts().reset_index()
-    attack_counts.columns = ['Category', 'Count']
-    
-    # Create enhanced bar chart
-    fig = px.bar(
-        attack_counts,
-        x='Category',
-        y='Count',
-        title='Enterprise Threat Distribution by Category',
-        color='Category',
-        color_discrete_sequence=px.colors.qualitative.Bold,
-        text='Count',  # Display count on bars
-        hover_data={
-            'Category': True,
-            'Count': True,
-            'Percentage': (attack_counts['Count'] / attack_counts['Count'].sum() * 100).round(1).astype(str) + '%'
-        },
+    # Create subplots
+    fig = make_subplots(
+        rows=1, cols=2,
+        specs=[[{"type": "pie"}, {"type": "bar"}]],
+        subplot_titles=('Anomaly Categories', 'Confidence Distribution')
     )
     
-    # Enhance the layout
+    # Filter for anomalous logs
+    if 'category' in logs_df.columns and 'confidence' in logs_df.columns:
+        anomalous_logs = logs_df[logs_df['category'] != 'Normal']
+        
+        if not anomalous_logs.empty:
+            # Pie chart of anomaly categories
+            category_counts = anomalous_logs['category'].value_counts().reset_index()
+            category_counts.columns = ['Category', 'Count']
+            
+            pie = go.Pie(
+                labels=category_counts['Category'],
+                values=category_counts['Count'],
+                hole=0.4,
+                marker_colors=px.colors.qualitative.Bold
+            )
+            fig.add_trace(pie, row=1, col=1)
+            
+            # Bar chart of confidence distribution
+            confidence_bins = [0, 1, 2, 3]
+            confidence_labels = ['Low', 'Medium', 'High', 'Critical']
+            
+            anomalous_logs['confidence_bin'] = pd.cut(
+                anomalous_logs['confidence'],
+                bins=[0, 1, 2, 3, 4],
+                labels=confidence_labels,
+                include_lowest=True
+            )
+            
+            confidence_counts = anomalous_logs['confidence_bin'].value_counts().reset_index()
+            confidence_counts.columns = ['Confidence', 'Count']
+            confidence_counts = confidence_counts.sort_values('Confidence', key=lambda x: pd.Categorical(
+                x, categories=confidence_labels, ordered=True
+            ))
+            
+            bar = go.Bar(
+                x=confidence_counts['Confidence'],
+                y=confidence_counts['Count'],
+                marker_color=px.colors.sequential.Plasma_r
+            )
+            fig.add_trace(bar, row=1, col=2)
+    
+    # Update layout
     fig.update_layout(
-        xaxis_title='Attack Category',
-        yaxis_title='Count',
-        height=500,
-        title_font_size=22,
-        legend_title_font_size=16,
-        legend_font_size=14,
-        font=dict(family="Arial, sans-serif"),
-        title_x=0.5,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=20, r=20, t=80, b=20),
-        xaxis=dict(
-            tickangle=-45,
-            tickfont=dict(size=12),
-            title_font=dict(size=14)
-        ),
-        yaxis=dict(
-            tickfont=dict(size=12),
-            title_font=dict(size=14),
-            gridcolor='rgba(211,211,211,0.3)'
-        )
-    )
-    
-    # Add a secondary y-axis showing the percentage
-    total_count = attack_counts['Count'].sum()
-    percentages = [(count / total_count * 100) for count in attack_counts['Count']]
-    
-    # Adding a trend line for percentages
-    fig.add_trace(
-        go.Scatter(
-            x=attack_counts['Category'],
-            y=percentages,
-            mode='lines+markers',
-            name='Percentage',
-            yaxis='y2',
-            line=dict(color='rgba(255, 50, 50, 0.8)', width=3),
-            marker=dict(size=8, symbol='diamond')
-        )
-    )
-    
-    fig.update_layout(
-        yaxis2=dict(
-            title='Percentage (%)',
-            titlefont=dict(color='rgba(255, 50, 50, 0.8)'),
-            tickfont=dict(color='rgba(255, 50, 50, 0.8)'),
-            overlaying='y',
-            side='right',
-            showgrid=False
-        )
-    )
-    
-    # Update bar appearance
-    fig.update_traces(
-        marker_line_color='rgba(0,0,0,0.3)',
-        marker_line_width=1.5,
-        opacity=0.8,
-        textposition='outside',
-        textfont=dict(size=12),
-        selector=dict(type='bar')
+        title_text='Log Anomaly Analysis',
+        showlegend=False,
+        height=500
     )
     
     return fig

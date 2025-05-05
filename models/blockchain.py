@@ -36,9 +36,28 @@ class BlockchainLogger:
         """
         Calculate the hash of a block
         """
-        # Convert data to string if it's not already
+        # Make data JSON serializable by converting non-serializable types
+        if isinstance(data, dict):
+            serializable_data = {}
+            for key, value in data.items():
+                # Convert non-serializable types to strings
+                if hasattr(value, 'isoformat') and callable(getattr(value, 'isoformat')):
+                    # Handle datetime and Timestamp objects
+                    serializable_data[key] = str(value)
+                elif str(type(value)).find('numpy') >= 0:
+                    # Handle numpy types
+                    serializable_data[key] = str(value)
+                else:
+                    serializable_data[key] = value
+            data = serializable_data
+            
+        # Convert to JSON string
         if isinstance(data, dict) or isinstance(data, list):
-            data = json.dumps(data, sort_keys=True)
+            try:
+                data = json.dumps(data, sort_keys=True)
+            except TypeError:
+                # If still not serializable, convert to string
+                data = str(data)
         
         # Create the block string to hash
         block_string = f"{index}{previous_hash}{data}{timestamp}"
