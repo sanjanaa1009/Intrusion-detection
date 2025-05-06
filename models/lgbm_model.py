@@ -51,17 +51,40 @@ class LGBMClassifier:
         # Create a copy of the input data
         df = data.copy()
         
+        # Check if we have required columns, if not create them
+        required_features = ['proto', 'service', 'dur', 'sbytes', 'dbytes', 'sttl', 'dttl', 'rate', 'sload', 'dload']
+        
+        # Fill missing columns with defaults if necessary
+        for col in required_features:
+            if col not in df.columns:
+                if col in ['proto', 'service']:
+                    df[col] = "unknown"
+                else:
+                    df[col] = 0
+        
         # Handle categorical features
         for feature in self.categorical_features:
             if feature in df.columns:
                 # Create label encoder if it doesn't exist
                 if feature not in self.label_encoders:
                     self.label_encoders[feature] = LabelEncoder()
-                    # Fit on the current data
-                    self.label_encoders[feature].fit(df[feature].astype(str))
+                    # Fit on the current data and add 'unknown' as a possible value
+                    values = np.append(df[feature].astype(str).values, ['unknown'])
+                    self.label_encoders[feature].fit(values)
                 
                 # Transform the data
-                df[feature] = self.label_encoders[feature].transform(df[feature].astype(str))
+                try:
+                    df[feature] = self.label_encoders[feature].transform(df[feature].astype(str))
+                except:
+                    # If unseen labels, mark them as 'unknown'
+                    df[feature] = 'unknown'
+                    df[feature] = self.label_encoders[feature].transform(df[feature].astype(str))
+        
+        # Handle non-numeric values in numeric columns
+        for col in df.columns:
+            if col not in self.categorical_features and df[col].dtype == 'object':
+                # Try to convert to numeric, set to 0 if failed
+                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
         
         # Keep only numeric columns
         numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
@@ -70,7 +93,8 @@ class LGBMClassifier:
         # Replace NaN values with 0
         df_numeric.fillna(0, inplace=True)
         
-        # Check if model is trained/fitted already, if so use stored feature names
+        # If we have actual feature names from training, use them
+        # This is important because the model expects features in a specific order
         if hasattr(self, 'feature_names_') and self.feature_names_ is not None:
             # Keep only features that were used during training
             common_features = list(set(numeric_cols).intersection(set(self.feature_names_)))

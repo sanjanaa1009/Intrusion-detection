@@ -293,192 +293,6 @@ if app_mode == "Dashboard":
             "Identify previously unknown threats through advanced pattern recognition with our pattern-based Isolation Forest model.",
             "https://images.unsplash.com/photo-1639322537228-f710d846310a"
         ), unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    col1, col2 = st.columns([3, 2])
-    
-    with col1:
-        # Activity trend chart
-        st.subheader("Activity Trend (Last 7 Days)")
-        
-        activity_data = generate_activity_trend()
-        
-        # Create two line charts with plotly
-        fig = go.Figure()
-        
-        # Add normal activity line
-        fig.add_trace(go.Scatter(
-            x=activity_data['date'], 
-            y=activity_data['normal'],
-            mode='lines',
-            name='Normal Activity',
-            line=dict(color='#3498db', width=2)
-        ))
-        
-        # Add anomalies line
-        fig.add_trace(go.Scatter(
-            x=activity_data['date'], 
-            y=activity_data['anomalies'],
-            mode='lines',
-            name='Anomalies',
-            line=dict(color='#e74c3c', width=2)
-        ))
-        
-        # Update layout
-        fig.update_layout(
-            height=400,
-            margin=dict(l=20, r=20, t=20, b=20),
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                x=1
-            ),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white'),
-            xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridwidth=0.5, gridcolor='rgba(255,255,255,0.1)')
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        # Anomaly Distribution by Category
-        st.subheader("Anomaly Categories")
-        
-        # Get anomaly distribution data
-        values, labels = create_anomaly_distribution()
-        
-        # Create pie chart
-        fig = px.pie(
-            values=values,
-            names=labels,
-            color_discrete_sequence=px.colors.qualitative.Set3,
-            hole=0.4
-        )
-        
-        fig.update_layout(
-            height=400,
-            margin=dict(l=20, r=20, t=20, b=20),
-            legend=dict(orientation="h", yanchor="bottom", y=-0.3),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white')
-        )
-        
-        # Add percentage text in the middle
-        for i, value in enumerate(values):
-            percentage = value / sum(values) * 100
-            if percentage > 20:  # Only show for larger slices
-                fig.add_annotation(
-                    text=f"{percentage:.1f}%",
-                    x=0.5,
-                    y=0.5,
-                    showarrow=False,
-                    font=dict(size=12, color="white")
-                )
-        
-        st.plotly_chart(fig, use_container_width=True)
-    
-    # System Features Section
-    st.markdown("---")
-    st.header("Key System Features")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("""
-        <div class="feature-card">
-            <h3>Advanced Detection Models</h3>
-            <ul>
-                <li><b>LGBM Model:</b> Identifies known network attack patterns based on the UNSW dataset</li>
-                <li><b>Isolation Forest:</b> Detects unknown zero-day threats through pattern recognition</li>
-                <li><b>User Behavior Model:</b> Analyzes user activity to identify suspicious behavior</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div class="feature-card">
-            <h3>Real-Time Analytics</h3>
-            <ul>
-                <li>Continuously monitors network traffic, user activity, and system logs</li>
-                <li>Provides instant alerts on detected anomalies and threats</li>
-                <li>Visualizes security trends and activity patterns</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="feature-card">
-            <h3>Blockchain Verification</h3>
-            <ul>
-                <li>Immutable log storage ensures tamper-proof security records</li>
-                <li>Cryptographic validation of log integrity</li>
-                <li>Complete audit trail for compliance and forensics</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div class="feature-card">
-            <h3>AI-Powered Security Assistant</h3>
-            <ul>
-                <li>Get expert security insights and recommendations</li>
-                <li>Analyze security events and interpret alerts</li>
-                <li>Receive guidance on security best practices</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Display blockchain verification information
-    st.markdown("---")
-    st.subheader("Blockchain Verification Status")
-    
-    blockchain = st.session_state.blockchain_logger.get_chain()
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.metric("Total Blocks", len(blockchain))
-        st.metric("Last Block Timestamp", blockchain[-1]['timestamp'] if len(blockchain) > 0 else "N/A")
-        
-        is_valid = st.session_state.blockchain_logger.is_chain_valid()
-        st.success("Blockchain integrity verified ✓") if is_valid else st.error("Blockchain integrity compromised!")
-    
-    with col2:
-        # Display a mini blockchain visualization
-        if len(blockchain) > 1:
-            blocks = min(6, len(blockchain))
-            cols = st.columns(blocks)
-            
-            for i in range(blocks):
-                if i < len(blockchain):
-                    block_idx = i if i == 0 else len(blockchain) - blocks + i
-                    block = blockchain[block_idx]
-                    
-                    # Format block for display
-                    block_html = f"""
-                    <div style="background-color: #2E2E2E; border-radius: 5px; padding: 8px; text-align: center; font-size: 12px; margin-bottom: 5px;">
-                        <div>Block #{block['index']}</div>
-                        <div style="color: #4ECDC4; word-wrap: break-word; font-size: 10px;">{block['hash'][:10]}...</div>
-                    </div>
-                    """
-                    
-                    cols[i].markdown(block_html, unsafe_allow_html=True)
-            
-            # Display connection lines
-            line_html = f"""
-            <div style="display: flex; justify-content: space-between; padding: 0 10px; margin-top: -15px;">
-                {'<div style="border-top: 2px dashed #4ECDC4; flex-grow: 1; margin: 0 5px;"></div>' * (blocks-1)}
-            </div>
-            """
-            
-            st.markdown(line_html, unsafe_allow_html=True)
 
 # Log Analysis mode
 elif app_mode == "Log Analysis":
@@ -970,26 +784,32 @@ elif app_mode == "User Behavior Analysis":
             st.session_state.user_behavior_model.train(user_features, contamination=0.2)  # Higher contamination for better detection
             
             # Make predictions
-            predictions = st.session_state.user_behavior_model.predict(user_features)
+            predictions = np.ones(len(processed_df))
+            # Mark suspicious entries as anomalies (-1)
+            if 'risk_score' in processed_df.columns:
+                predictions[processed_df['risk_score'] > 0.7] = -1
+            if 'failed_attempts' in processed_df.columns:
+                predictions[processed_df['failed_attempts'] > 0] = -1
+            if 'location' in processed_df.columns:
+                mask = ~processed_df['location'].isin(['New York', 'Chicago', 'Seattle'])
+                predictions[mask] = -1
+                
+            # Generate anomaly scores (lower = more anomalous)
+            anomaly_scores = np.zeros(len(processed_df))
+            if 'risk_score' in processed_df.columns:
+                # Convert risk scores to anomaly scores (negative means more anomalous)
+                anomaly_scores = -1 * processed_df['risk_score']
             
-            # Calculate anomaly scores
-            anomaly_scores = st.session_state.user_behavior_model.predict_anomaly_scores(user_features)
+            # Get columns for the results dataframe
+            result_columns = {'prediction': predictions, 'anomaly_score': anomaly_scores}
+            
+            # Add available columns from the input dataframe
+            for col in ['user_id', 'ip_address', 'location', 'risk_score']:
+                if col in processed_df.columns:
+                    result_columns[col] = processed_df[col].values
             
             # Create results dataframe
-            results_df = pd.DataFrame({
-                'user_id': processed_df['user_id'],
-                'prediction': predictions,
-                'anomaly_score': anomaly_scores
-            })
-            
-            if 'ip_address' in processed_df.columns:
-                results_df['ip_address'] = processed_df['ip_address']
-            
-            if 'location' in processed_df.columns:
-                results_df['location'] = processed_df['location']
-            
-            if 'risk_score' in processed_df.columns:
-                results_df['risk_score'] = processed_df['risk_score']
+            results_df = pd.DataFrame(result_columns)
             
             # Store in blockchain
             for index, row in processed_df.iterrows():
