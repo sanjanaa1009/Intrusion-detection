@@ -225,27 +225,19 @@ class LGBMClassifier:
                             y_balanced = []
                             for label, group in grouped:
                                 if len(group) == 1:
-                                    # Duplicate the single sample
-                                    X_balanced = pd.concat(
-                                        [X_balanced, group, group])
+                                    # Duplicate the single sample but reset index to avoid duplicates
+                                    group_copy = group.copy().reset_index(drop=True)
+                                    group_copy2 = group.copy().reset_index(drop=True)
+                                    X_balanced = pd.concat([X_balanced, group_copy, group_copy2], ignore_index=True)
                                     y_balanced.extend([label, label])
                                 else:
-                                    # Take the first 2 samples or duplicate if only 1
-                                    if len(group) == 1:
-                                        # Make two copies of the single row
-                                        X_balanced = pd.concat(
-                                            [X_balanced, group, group])
-                                        y_balanced.extend([label, label])
-                                    else:
-                                        # Take existing samples (at least 2)
-                                        X_balanced = pd.concat(
-                                            [X_balanced,
-                                             group.head(2)])
-                                        y_balanced.extend([label] *
-                                                          min(2, len(group)))
+                                    # Take the first 2 samples
+                                    # Take existing samples (at least 2)
+                                    X_balanced = pd.concat([X_balanced, group.head(2).reset_index(drop=True)], ignore_index=True)
+                                    y_balanced.extend([label] * min(2, len(group)))
 
                             # Create a clean feature set from the balanced data
-                            X = X_balanced.copy()
+                            X = X_balanced.copy().reset_index(drop=True)
                             columns_to_drop = ['label', 'attack_cat']
                             for col in columns_to_drop:
                                 if col in X.columns:
@@ -254,11 +246,13 @@ class LGBMClassifier:
                             # Convert to numpy array for the labels
                             y = np.array(y_balanced)
                         else:
-                            X = sample_data.drop(['label', 'attack_cat'],
+                            # Reset index to avoid duplicates
+                            sample_data_reset = sample_data.reset_index(drop=True)
+                            X = sample_data_reset.drop(['label', 'attack_cat'],
                                                  axis=1,
                                                  errors='ignore')
                             self.feature_names_ = list(X.columns)
-                            y = sample_data['label']
+                            y = sample_data_reset['label']
 
                     self.train(X, y)
                     return self
