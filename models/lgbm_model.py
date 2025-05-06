@@ -286,10 +286,18 @@ class LGBMClassifier:
         # Process features
         X_processed = self.preprocess_data(X)
         
-        # Split data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X_processed, y, test_size=0.2, random_state=42, stratify=y
-        )
+        # Split data - avoid stratification if not enough samples per class
+        try:
+            # Try with stratification first (better balance)
+            X_train, X_test, y_train, y_test = train_test_split(
+                X_processed, y, test_size=0.2, random_state=42, stratify=y
+            )
+        except ValueError:
+            # Fall back to regular split if we have too few samples per class
+            print("Warning: Not enough samples per class for stratified split, using regular split")
+            X_train, X_test, y_train, y_test = train_test_split(
+                X_processed, y, test_size=0.2, random_state=42
+            )
         
         # Always use GradientBoostingClassifier as our LGBM implementation
         self.model = GradientBoostingClassifier(
@@ -457,8 +465,8 @@ class LGBMClassifier:
         plt.figure(figsize=(10, 8))
         plt.rcParams['font.size'] = 12
         
-        # Plot using seaborn barplot
-        sns.barplot(x=top_importances, y=top_feature_names, palette="viridis")
+        # Plot using seaborn barplot with explicit x and y 
+        sns.barplot(x=top_importances, y=top_feature_names, hue=None, palette="viridis")
         
         plt.xlabel('Feature Importance')
         plt.ylabel('Feature')

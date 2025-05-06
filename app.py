@@ -521,14 +521,56 @@ elif app_mode == "Log Analysis":
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    attack_counts = st.session_state.results['predicted_attack_cat'].value_counts()
+                    attack_counts = st.session_state.results['predicted_attack_cat'].value_counts().reset_index()
+                    attack_counts.columns = ['attack_type', 'count']
+                    
+                    # Custom color mapping based on attack severity
+                    severity_colors = {
+                        'Normal': '#4CAF50',  # Green
+                        'Reconnaissance': '#FFC107',  # Yellow
+                        'DoS': '#FF9800',  # Orange
+                        'Generic': '#F44336',  # Red
+                        'Exploits': '#D32F2F',  # Dark Red
+                        'Fuzzers': '#FF5722',  # Deep Orange
+                        'Analysis': '#9C27B0',  # Purple
+                        'Backdoor': '#7B1FA2',  # Dark Purple
+                        'Shellcode': '#C2185B',  # Dark Pink
+                        'Worms': '#880E4F'   # Very Dark Pink
+                    }
+                    
+                    # Get colors for each attack type in the data
+                    colors = [severity_colors.get(attack, '#2196F3') for attack in attack_counts['attack_type']]
                     
                     fig = px.pie(
-                        values=attack_counts.values,
-                        names=attack_counts.index,
+                        attack_counts,
+                        values='count',
+                        names='attack_type',
                         title="Attack Type Distribution",
-                        color_discrete_sequence=px.colors.sequential.Plasma_r,
+                        color='attack_type',
+                        color_discrete_map={cat: severity_colors.get(cat, '#2196F3') for cat in attack_counts['attack_type']},
                         hole=0.4
+                    )
+                    
+                    # Update the layout for better appearance
+                    fig.update_layout(
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1
+                        ),
+                        margin=dict(l=20, r=20, t=40, b=20),
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)'
+                    )
+                    
+                    # Add percentage labels
+                    fig.update_traces(
+                        textposition='inside',
+                        textinfo='percent+label',
+                        hoverinfo='label+percent+value',
+                        marker=dict(line=dict(color='#000000', width=1))
                     )
                     
                     st.plotly_chart(fig, use_container_width=True)
@@ -558,24 +600,30 @@ elif app_mode == "Log Analysis":
                         # Create artificial timeline data based on attack categories
                         categories = st.session_state.results['predicted_attack_cat'].unique()
                         
-                        # Create bar chart for attack types
-                        attack_counts_df = pd.DataFrame({
-                            'Category': attack_counts.index,
-                            'Count': attack_counts.values
-                        })
-                        
+                        # Create bar chart for attack types 
+                        # Use the attack_counts dataframe we already have
                         fig = px.bar(
-                            attack_counts_df,
-                            x='Category',
-                            y='Count',
+                            attack_counts,
+                            x='attack_type',
+                            y='count',
                             title="Attack Categories",
-                            color='Category',
-                            color_discrete_sequence=px.colors.qualitative.Bold
+                            color='attack_type',
+                            color_discrete_map=severity_colors
                         )
                         
                         fig.update_layout(
                             xaxis_title="Attack Type",
-                            yaxis_title="Count"
+                            yaxis_title="Count",
+                            margin=dict(l=20, r=20, t=40, b=20),
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            font=dict(color='white')
+                        )
+                        
+                        # Add value labels on top of bars
+                        fig.update_traces(
+                            texttemplate='%{y}',
+                            textposition='outside'
                         )
                         
                         st.plotly_chart(fig, use_container_width=True)
