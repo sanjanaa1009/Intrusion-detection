@@ -409,6 +409,10 @@ elif app_mode == "Log Analysis":
                                 mapped_df[col] = 0
                             elif col in ['dur']:
                                 mapped_df[col] = 1.0
+                            elif col in ['proto']:
+                                mapped_df[col] = "tcp"  # Default protocol
+                            elif col in ['service']:
+                                mapped_df[col] = "http"  # Default service
                             else:
                                 mapped_df[col] = "unknown"
                     

@@ -67,15 +67,18 @@ class LGBMClassifier:
                     df[col] = 0
         
         # Special handling for IP addresses - extract subnet as a feature
-        if 'src_ip' in df.columns and 'dst_ip' in df.columns:
-            # Extract subnet information - first octet
-            if 'src_ip' in df.columns:
-                df['src_subnet'] = df['src_ip'].astype(str).apply(
-                    lambda x: x.split('.')[0] if '.' in x and len(x.split('.')) >= 1 else '0')
-            
-            if 'dst_ip' in df.columns:
-                df['dst_subnet'] = df['dst_ip'].astype(str).apply(
-                    lambda x: x.split('.')[0] if '.' in x and len(x.split('.')) >= 1 else '0')
+        # Always create subnet features to ensure consistency
+        if 'src_ip' in df.columns:
+            df['src_subnet'] = df['src_ip'].astype(str).apply(
+                lambda x: x.split('.')[0] if '.' in x and len(x.split('.')) >= 1 else '0')
+        else:
+            df['src_subnet'] = '0'  # Default value if src_ip is missing
+        
+        if 'dst_ip' in df.columns:
+            df['dst_subnet'] = df['dst_ip'].astype(str).apply(
+                lambda x: x.split('.')[0] if '.' in x and len(x.split('.')) >= 1 else '0')
+        else:
+            df['dst_subnet'] = '0'  # Default value if dst_ip is missing
         
         # Handle categorical features
         all_categorical = self.categorical_features + ['src_subnet', 'dst_subnet']
