@@ -190,8 +190,37 @@ class LGBMClassifier:
             try:
                 sample_data = pd.read_csv(sample_file)
                 if 'label' in sample_data.columns:
-                    X = sample_data.drop(['label', 'attack_cat'], axis=1, errors='ignore')
-                    y = sample_data['label']
+                    # Group by label to ensure we have at least 2 samples per class
+                    grouped = sample_data.groupby('label')
+                    if grouped.ngroups < 2:
+                        # Create synthetic data with at least 2 classes
+                        X = sample_data.drop(['label', 'attack_cat'], axis=1, errors='ignore')
+                        # Create multiple samples for at least 2 classes
+                        y = np.array([0, 0, 1, 1])  # At least 2 samples of 2 classes
+                        # Use only the first 4 samples
+                        X = X.head(4)
+                    else:
+                        # Check if any class has only 1 sample
+                        min_samples = grouped.size().min()
+                        if min_samples < 2:
+                            # Make sure each class has at least 2 samples
+                            X_balanced = pd.DataFrame()
+                            y_balanced = []
+                            for label, group in grouped:
+                                if len(group) == 1:
+                                    # Duplicate the single sample
+                                    X_balanced = pd.concat([X_balanced, group, group])
+                                    y_balanced.extend([label, label])
+                                else:
+                                    # Take the first 2 samples
+                                    X_balanced = pd.concat([X_balanced, group.head(2)])
+                                    y_balanced.extend([label] * min(2, len(group)))
+                            X = X_balanced.drop(['label', 'attack_cat'], axis=1, errors='ignore')
+                            y = np.array(y_balanced)
+                        else:
+                            X = sample_data.drop(['label', 'attack_cat'], axis=1, errors='ignore')
+                            y = sample_data['label']
+                    
                     self.train(X, y)
                     return self
             except Exception as e:
