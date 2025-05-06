@@ -18,27 +18,59 @@ class UnknownThreatClassifier:
         self.threat_patterns = {
             'Credential Stuffing': [
                 (r'failed login for \w+ from \d+\.\d+\.\d+\.\d+', 3),
-                (r'authentication attempt with \d+ passwords', 3)
+                (r'authentication attempt with \d+ passwords', 3),
+                (r'failed password for', 3),
+                (r'multiple failed login attempts', 3),
+                (r'brute force', 3)
             ],
             'API Abuse': [
                 (r'api endpoint \S+ called \d+ times from \d+\.\d+\.\d+\.\d+', 2),
-                (r'unusual api parameter: \S+=', 2)
+                (r'unusual api parameter: \S+=', 2),
+                (r'api rate limit exceeded', 2),
+                (r'unusual api call pattern', 2)
             ],
             'Cloud Misconfig': [
                 (r'public access enabled for \S+ bucket', 3),
-                (r'security group \S+ allows 0\.0\.0\.0/0', 3)
+                (r'security group \S+ allows 0\.0\.0\.0/0', 3),
+                (r'critical configuration changes', 2),
+                (r'public bucket exposure', 3)
             ],
             'Lateral Movement': [
                 (r'connection from \d+\.\d+\.\d+\.\d+ to internal \S+', 2),
-                (r'smb session established from \S+ to \S+', 2)
+                (r'smb session established from \S+ to \S+', 2),
+                (r'unusual process behavior', 2),
+                (r'access to multiple systems', 2)
             ],
             'Cryptojacking': [
                 (r'unexpected cpu spike from process \S+', 2),
-                (r'crypto miner process detected', 3)
+                (r'crypto miner process detected', 3),
+                (r'high cpu usage', 2),
+                (r'mining process', 3)
             ],
             'Supply Chain': [
                 (r'dependency \S+ contains malicious code', 3),
-                (r'package \S+ modified after installation', 2)
+                (r'package \S+ modified after installation', 2),
+                (r'unusual package behavior', 2),
+                (r'unauthorized modification', 3)
+            ],
+            'Data Exfiltration': [
+                (r'unusual data transfer', 3),
+                (r'large file download', 2),
+                (r'unauthorized access to sensitive', 3),
+                (r'suspicious download pattern', 2)
+            ],
+            'Privilege Escalation': [
+                (r'elevated privileges', 3),
+                (r'sudo command', 2),
+                (r'permission change', 2),
+                (r'unauthorized admin access', 3)
+            ],
+            'Web Attacks': [
+                (r'sql injection', 3),
+                (r'xss attack', 3),
+                (r'csrf detected', 3),
+                (r'path traversal', 3),
+                (r'\.\./\.\./\.\./', 3)
             ]
         }
         
@@ -58,7 +90,7 @@ class UnknownThreatClassifier:
             ))
         ])
         
-        # Initialize with a small sample dataset
+        # Initialize with a small sample dataset to prevent "not fitted" errors
         sample_logs = pd.DataFrame({
             'message': [
                 'User login successful',
@@ -103,10 +135,13 @@ class UnknownThreatClassifier:
         except Exception as e:
             print(f"Could not save model: {e}")
 
-    def detect(self, log_entry: Union[Dict, pd.Series]) -> Dict:
+    def detect(self, log_entry: Union[Dict, pd.Series, str]) -> Dict:
         """
         Detect unknown threats in a log entry.
         
+        Parameters:
+            log_entry: Dictionary, Series, or string log entry
+            
         Returns:
             {
                 'category': str,
@@ -119,11 +154,17 @@ class UnknownThreatClassifier:
             # Extract message from log entry
             if isinstance(log_entry, dict):
                 message = log_entry.get('message', '')
-            elif isinstance(log_entry, pd.Series):
-                message = log_entry.get('message', '')
-                if pd.isna(message):
-                    # Try to create a message from all fields
+                if not message and len(log_entry) > 0:
+                    # Create message from all fields
                     message = ' '.join([f"{k}={v}" for k, v in log_entry.items() if pd.notna(v)])
+            elif isinstance(log_entry, pd.Series):
+                if 'message' in log_entry:
+                    message = log_entry['message']
+                else:
+                    # Create message from all fields
+                    message = ' '.join([f"{k}={v}" for k, v in log_entry.items() if pd.notna(v)])
+            elif isinstance(log_entry, str):
+                message = log_entry
             else:
                 message = str(log_entry)
             
@@ -169,7 +210,7 @@ class UnknownThreatClassifier:
                         })
                 except Exception as e:
                     # Fall back to simple pattern matching
-                    if 'error' in message.lower() or 'fail' in message.lower() or 'denied' in message.lower():
+                    if any(keyword in message.lower() for keyword in ['error', 'fail', 'denied', 'attack', 'warning', 'threat', 'unauthorized']):
                         results.update({
                             'category': 'Possible Threat',
                             'confidence': 1.0,
@@ -196,6 +237,16 @@ class UnknownThreatClassifier:
     def detect_batch(self, logs_df: pd.DataFrame) -> pd.DataFrame:
         """Process multiple logs efficiently"""
         results = []
+        
+        # Check if the dataframe has a message column
+        if 'message' not in logs_df.columns:
+            # Create message column from all other columns
+            logs_df = logs_df.copy()
+            logs_df['message'] = logs_df.apply(
+                lambda row: ' '.join([f"{k}={v}" for k, v in row.items() if pd.notna(v) and k != 'message']), 
+                axis=1
+            )
+        
         for _, log in logs_df.iterrows():
             try:
                 result = self.detect(log)
@@ -208,7 +259,15 @@ class UnknownThreatClassifier:
                     'evidence': [f'Error: {str(e)}'],
                     'is_unknown': False
                 })
-        return pd.DataFrame(results)
+        
+        result_df = pd.DataFrame(results)
+        
+        # Copy original columns from the input dataframe if they're not already in the result
+        for col in logs_df.columns:
+            if col not in result_df.columns:
+                result_df[col] = logs_df[col].values
+        
+        return result_df
 
     @classmethod
     def load(cls, model_path: str):
