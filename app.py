@@ -402,26 +402,16 @@ elif app_mode == "Log Analysis":
                     for req_col, mapped_col in col_mapping.items():
                         mapped_df[req_col] = st.session_state.logs_data[mapped_col]
                     
-                    # Fill missing columns with defaults
+                    # Fill missing columns with defaults - no need for extensive defaults
+                    # as the DataProcessor will handle missing values appropriately
                     for col in missing_columns:
                         if col not in col_mapping:
                             if col in ['sbytes', 'dbytes', 'sttl', 'dttl']:
                                 mapped_df[col] = 0
                             elif col in ['dur']:
                                 mapped_df[col] = 1.0
-                            elif col in ['proto']:
-                                mapped_df[col] = "tcp"  # Default protocol
-                            elif col in ['service']:
-                                mapped_df[col] = "http"  # Default service
                             else:
                                 mapped_df[col] = "unknown"
-                    
-                    # Add source and destination IPs if available
-                    if 'src_ip' not in mapped_df and 'ip_address' in st.session_state.logs_data:
-                        mapped_df['src_ip'] = st.session_state.logs_data['ip_address']
-                    
-                    if 'dst_ip' not in mapped_df:
-                        mapped_df['dst_ip'] = "192.168.1.1"  # Default gateway
                     
                     # Process with LGBM model
                     st.success("Created mapped dataframe for analysis")

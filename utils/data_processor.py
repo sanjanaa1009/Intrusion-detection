@@ -35,10 +35,38 @@ class DataProcessor:
             else:
                 df[col] = df[col].fillna(0)
         
+        # Ensure required categorical features exist
+        for feature in ['proto', 'service', 'state']:
+            if feature not in df.columns:
+                if feature == 'proto':
+                    df[feature] = 'tcp'  # Default protocol
+                elif feature == 'service':
+                    df[feature] = 'http'  # Default service
+                else:
+                    df[feature] = 'unknown'
+        
         # Convert categorical features to string
         for feature in self.categorical_features:
             if feature in df.columns:
                 df[feature] = df[feature].astype(str)
+        
+        # Ensure IP addresses are present and extract subnet features
+        # Add source and destination IPs if missing
+        if 'src_ip' not in df.columns:
+            if 'ip_address' in df.columns:
+                df['src_ip'] = df['ip_address']
+            else:
+                df['src_ip'] = '0.0.0.0'  # Default source IP
+                
+        if 'dst_ip' not in df.columns:
+            df['dst_ip'] = '192.168.1.1'  # Default destination IP (gateway)
+        
+        # Extract subnet information - first octet
+        df['src_subnet'] = df['src_ip'].astype(str).apply(
+            lambda x: x.split('.')[0] if '.' in x and len(x.split('.')) >= 1 else '0')
+        
+        df['dst_subnet'] = df['dst_ip'].astype(str).apply(
+            lambda x: x.split('.')[0] if '.' in x and len(x.split('.')) >= 1 else '0')
         
         # Extract datetime features if timestamp is available
         if 'timestamp' in df.columns:
@@ -47,9 +75,10 @@ class DataProcessor:
             df['day_of_week'] = df['timestamp'].dt.dayofweek
             df['is_weekend'] = df['day_of_week'].apply(lambda x: 1 if x >= 5 else 0)
         
-        # Ensure all required columns exist
+        # Ensure all required numeric columns exist
         required_columns = [
-            'dur', 'spkts', 'dpkts', 'sbytes', 'dbytes', 'rate', 'sload', 'dload'
+            'dur', 'spkts', 'dpkts', 'sbytes', 'dbytes', 'sttl', 'dttl',
+            'rate', 'sload', 'dload', 'sinpkt', 'dinpkt'
         ]
         
         for col in required_columns:
