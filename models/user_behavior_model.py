@@ -259,7 +259,7 @@ class UserBehaviorModel:
         top_feature_names = [feature_names[i] for i in indices]
         
         fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(x=top_importances, y=top_feature_names, palette="viridis")
+        sns.barplot(x=top_importances, y=top_feature_names, hue=top_feature_names, palette="viridis", legend=False)
         plt.title(f'Top {top_n} Feature Importances')
         plt.xlabel('Importance Score')
         plt.tight_layout()
