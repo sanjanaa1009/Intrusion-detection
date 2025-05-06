@@ -258,16 +258,6 @@ if app_mode == "Dashboard":
     </div>
     """, unsafe_allow_html=True)
     
-    # Display key metrics in cards
-    col1, col2, col3, col4 = st.columns(4)
-    
-    display_metric_card("Security Score", f"{st.session_state.security_score}", "down", "-1.2%", "🛡️", col1)
-    display_metric_card("Anomalies Detected", f"{st.session_state.anomaly_count}", "up", "+4.6%", "⚠️", col2)
-    display_metric_card("Critical Events", f"{st.session_state.critical_events}", "up", "+3", "🔥", col3)
-    display_metric_card("Suspicious Users", f"{st.session_state.suspicious_users}", "up", "+0", "👤", col4)
-    
-    st.markdown("---")
-    
     # CyberSentry Overview Section
     st.header("CyberSentry Overview")
     
@@ -569,47 +559,47 @@ elif app_mode == "Log Analysis":
                 # Display table of attack types and mitigations
                 st.subheader("Attack Types & Mitigations")
                 
-                # UNSW attack categories and recommended mitigations
+                # UNSW attack categories and recommended mitigations with expanded descriptions
                 attack_mitigations = {
                     "Normal": {
                         "description": "Regular network traffic without malicious intent.",
                         "mitigation": "No action required."
                     },
                     "Generic": {
-                        "description": "A technique that works against all block ciphers without regard to the algorithm specifics.",
-                        "mitigation": "Implement strong encryption with modern algorithms. Use TLS 1.3 and above. Rotate keys regularly."
+                        "description": "Cryptographic attacks like brute-force on encryption algorithms (e.g., MD5 collisions). These techniques work against all block ciphers without regard to the algorithm specifics.",
+                        "mitigation": "Implement strong encryption with modern algorithms. Use TLS 1.3 and above. Rotate keys regularly. Avoid deprecated encryption algorithms."
                     },
                     "Exploits": {
-                        "description": "Exploiting a vulnerability to gain unauthorized access or privileges.",
-                        "mitigation": "Keep systems patched and updated. Implement vulnerability scanning. Use intrusion prevention systems."
+                        "description": "Attacks that exploit vulnerabilities in operating systems, software, or network services to gain unauthorized access or elevated privileges.",
+                        "mitigation": "Keep systems patched and updated. Implement vulnerability scanning. Use intrusion prevention systems. Follow security best practices in application development."
                     },
                     "Fuzzers": {
-                        "description": "Attempts to inject malformed or unexpected data to find vulnerabilities.",
-                        "mitigation": "Implement input validation, use WAF (Web Application Firewall), and perform regular security testing."
+                        "description": "Attempts to crash or compromise systems by sending malformed or unexpected data to find vulnerabilities through automated or semi-automated techniques.",
+                        "mitigation": "Implement input validation, use WAF (Web Application Firewall), and perform regular security testing. Employ robust error handling in applications."
                     },
                     "DoS": {
-                        "description": "Denial of Service attacks to make resources unavailable.",
-                        "mitigation": "Implement rate limiting, use DDoS protection services, configure resource quotas, and use traffic filtering."
+                        "description": "Denial of Service attacks that aim to shut down a machine or network by overwhelming it (e.g., SYN flood, UDP flood), making resources unavailable to legitimate users.",
+                        "mitigation": "Implement rate limiting, use DDoS protection services, configure resource quotas, and use traffic filtering. Deploy load balancers to distribute traffic."
                     },
                     "Reconnaissance": {
-                        "description": "Information gathering to map networks and identify vulnerabilities.",
-                        "mitigation": "Limit exposed information, use firewalls to block port scanning, implement network segmentation."
+                        "description": "Information gathering activities like port scanning, network mapping, and enumeration to identify potential attack vectors and vulnerabilities.",
+                        "mitigation": "Limit exposed information, use firewalls to block port scanning, implement network segmentation. Monitor for unusual scanning activity."
                     },
                     "Analysis": {
-                        "description": "Intrusive activities to understand system configurations.",
-                        "mitigation": "Implement least privilege, use IDS/IPS systems, limit service information disclosure."
+                        "description": "Includes port scanning, spam, email harvesting, and other intrusive activities to understand system configurations and security posture.",
+                        "mitigation": "Implement least privilege, use IDS/IPS systems, limit service information disclosure. Configure services to minimize information leakage."
                     },
                     "Backdoor": {
-                        "description": "Methods to bypass authentication and access systems.",
-                        "mitigation": "Use EDR solutions, implement application whitelisting, perform regular security audits."
+                        "description": "Hidden ways to bypass normal authentication (e.g., NetBus, Back Orifice) and maintain persistent access to compromised systems.",
+                        "mitigation": "Use EDR solutions, implement application whitelisting, perform regular security audits. Monitor for unusual outbound connections."
                     },
                     "Shellcode": {
-                        "description": "Small pieces of code used as payload in exploitation.",
-                        "mitigation": "Use ASLR, DEP, and other memory protection mechanisms. Keep systems patched."
+                        "description": "Injection of malicious payloads, often used to gain shell access to a target system by exploiting memory corruption vulnerabilities.",
+                        "mitigation": "Use ASLR, DEP, and other memory protection mechanisms. Keep systems patched. Implement application security controls."
                     },
                     "Worms": {
-                        "description": "Self-replicating malware that spreads across networks.",
-                        "mitigation": "Use endpoint protection, segment networks, implement proper firewall rules."
+                        "description": "Self-replicating malware (e.g., Blaster, Sasser) that spreads across networks and systems without user intervention.",
+                        "mitigation": "Use endpoint protection, segment networks, implement proper firewall rules. Keep systems patched and updated."
                     }
                 }
                 

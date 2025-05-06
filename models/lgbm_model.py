@@ -197,10 +197,17 @@ class LGBMClassifier:
             except Exception as e:
                 print(f"Could not train on sample data: {e}")
         
-        # Fallback: Create synthetic data for model initialization
+        # Fallback: Create synthetic data for model initialization with all required features
         # Note: This is just to initialize the model structure, not for actual predictions
-        X = np.random.rand(100, 10)
+        feature_names = [
+            'dur', 'sbytes', 'dbytes', 'sttl', 'dttl', 'rate', 'sload', 'dload', 'sinpkt', 'dinpkt'
+        ]
+        # Create a DataFrame with named columns to ensure consistency
+        X = pd.DataFrame(np.random.rand(100, len(feature_names)), columns=feature_names)
         y = np.random.randint(0, len(self.attack_categories), 100)
+        
+        # Store feature names for later use
+        self.feature_names_ = feature_names
         
         # Fit the model with the data
         self.model.fit(X, y)
