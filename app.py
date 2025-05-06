@@ -14,6 +14,8 @@ from plotly.subplots import make_subplots
 
 # Import custom modules
 from models.lgbm_model import LGBMClassifier
+from models.isolation_forest_model import IsolationForestModel
+from models.user_behavior_model import UserBehaviorModel
 from models.blockchain import BlockchainLogger
 from utils.data_processor import DataProcessor
 from utils.log_parser import LogParser
@@ -89,6 +91,13 @@ st.markdown("""
         font-size: 14px;
         float: right;
     }
+    .feature-card {
+        background-color: #2E2E2E;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -100,8 +109,11 @@ if 'lgbm_model' not in st.session_state:
     st.session_state.lgbm_model = LGBMClassifier()
     st.session_state.lgbm_model.initialize_model()
 
+if 'isolation_forest_model' not in st.session_state:
+    st.session_state.isolation_forest_model = IsolationForestModel()
+
 if 'user_behavior_model' not in st.session_state:
-    st.session_state.user_behavior_model = UserBehaviorAnalyzer()
+    st.session_state.user_behavior_model = UserBehaviorModel()
 
 if 'unknown_threat_detector' not in st.session_state:
     st.session_state.unknown_threat_detector = UnknownThreatClassifier()
@@ -225,6 +237,17 @@ def display_anomaly_detail(title, count, description, col, severity="High"):
     """
     col.markdown(html, unsafe_allow_html=True)
 
+# Helper function to display feature cards for dashboard
+def display_feature_card(title, description, image_url):
+    html = f"""
+    <div class="feature-card">
+        <h3>{title}</h3>
+        <img src="{image_url}" style="width: 100%; border-radius: 5px; margin: 10px 0;">
+        <p>{description}</p>
+    </div>
+    """
+    return html
+
 # Display dashboard overview
 if app_mode == "Dashboard":
     st.title("CyberSentry: Enterprise Security Dashboard")
@@ -242,6 +265,34 @@ if app_mode == "Dashboard":
     display_metric_card("Anomalies Detected", f"{st.session_state.anomaly_count}", "up", "+4.6%", "⚠️", col2)
     display_metric_card("Critical Events", f"{st.session_state.critical_events}", "up", "+3", "🔥", col3)
     display_metric_card("Suspicious Users", f"{st.session_state.suspicious_users}", "up", "+0", "👤", col4)
+    
+    st.markdown("---")
+    
+    # CyberSentry Overview Section
+    st.header("CyberSentry Overview")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown(display_feature_card(
+            "Log Analysis",
+            "Analyze logs for known attack patterns based on the UNSW dataset. Detect intrusions with high accuracy using our LGBM model.",
+            "https://images.unsplash.com/photo-1558494949-ef010cbdcc31"
+        ), unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(display_feature_card(
+            "User Behavior Analysis",
+            "Track and detect anomalies in enterprise user behavior patterns using machine learning with our Isolation Forest model.",
+            "https://images.unsplash.com/photo-1573164713988-8665fc963095"
+        ), unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown(display_feature_card(
+            "Zero-Day Detection",
+            "Identify previously unknown threats through advanced pattern recognition with our pattern-based Isolation Forest model.",
+            "https://images.unsplash.com/photo-1639322537228-f710d846310a"
+        ), unsafe_allow_html=True)
     
     st.markdown("---")
     
@@ -332,152 +383,57 @@ if app_mode == "Dashboard":
         
         st.plotly_chart(fig, use_container_width=True)
     
-    # Display detailed anomaly breakdowns
+    # System Features Section
     st.markdown("---")
-    st.subheader("Anomaly Details")
+    st.header("Key System Features")
     
-    col1, col2, col3 = st.columns(3)
-    
-    display_anomaly_detail(
-        "Authentication Anomalies", 
-        "11", 
-        "Unusual login patterns or authentication failures detected.", 
-        col1
-    )
-    
-    display_anomaly_detail(
-        "System Anomalies", 
-        "9", 
-        "System resource anomalies or unusual process behavior detected.", 
-        col2
-    )
-    
-    display_anomaly_detail(
-        "Configuration Anomalies", 
-        "7", 
-        "Critical configuration changes detected outside normal procedures.", 
-        col3
-    )
-    
-    # Show trends for each type
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("<p style='margin-top:10px'>Trend Over Last 24 Hours</p>", unsafe_allow_html=True)
+        st.markdown("""
+        <div class="feature-card">
+            <h3>Advanced Detection Models</h3>
+            <ul>
+                <li><b>LGBM Model:</b> Identifies known network attack patterns based on the UNSW dataset</li>
+                <li><b>Isolation Forest:</b> Detects unknown zero-day threats through pattern recognition</li>
+                <li><b>User Behavior Model:</b> Analyzes user activity to identify suspicious behavior</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Generate spike data for trend
-        hours = range(24)
-        values = [0] * 24
-        for i in [2, 5, 9, 13, 18, 22]:
-            values[i] = 1
-        
-        # Create trend chart
-        fig = px.bar(
-            x=hours,
-            y=values,
-            color_discrete_sequence=['#ff7f0e']
-        )
-        
-        fig.update_layout(
-            height=100,
-            margin=dict(l=0, r=0, t=0, b=0, pad=0),
-            showlegend=False,
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white'),
-            xaxis=dict(showticklabels=False, showgrid=False),
-            yaxis=dict(showticklabels=False, showgrid=False, range=[0, 1.1])
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+        st.markdown("""
+        <div class="feature-card">
+            <h3>Real-Time Analytics</h3>
+            <ul>
+                <li>Continuously monitors network traffic, user activity, and system logs</li>
+                <li>Provides instant alerts on detected anomalies and threats</li>
+                <li>Visualizes security trends and activity patterns</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col2:
-        st.markdown("<p style='margin-top:10px'>Trend Over Last 24 Hours</p>", unsafe_allow_html=True)
+        st.markdown("""
+        <div class="feature-card">
+            <h3>Blockchain Verification</h3>
+            <ul>
+                <li>Immutable log storage ensures tamper-proof security records</li>
+                <li>Cryptographic validation of log integrity</li>
+                <li>Complete audit trail for compliance and forensics</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Generate spike data for trend
-        hours = range(24)
-        values = [0] * 24
-        for i in [1, 3, 7, 11, 15, 19, 23]:
-            values[i] = 1
-        
-        # Create trend chart
-        fig = px.bar(
-            x=hours,
-            y=values,
-            color_discrete_sequence=['#ff7f0e']
-        )
-        
-        # Add annotation for change
-        annotations = [
-            dict(
-                x=22, y=1,
-                text="+0.5",
-                showarrow=False,
-                font=dict(color="#4CAF50"),
-                bgcolor="#2E2E2E",
-                bordercolor="#4CAF50",
-                borderwidth=1,
-                borderpad=4
-            )
-        ]
-        
-        fig.update_layout(
-            height=100,
-            margin=dict(l=0, r=0, t=0, b=0, pad=0),
-            showlegend=False,
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white'),
-            xaxis=dict(showticklabels=False, showgrid=False),
-            yaxis=dict(showticklabels=False, showgrid=False, range=[0, 1.1]),
-            annotations=annotations
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col3:
-        st.markdown("<p style='margin-top:10px'>Trend Over Last 24 Hours</p>", unsafe_allow_html=True)
-        
-        # Generate spike data for trend
-        hours = range(24)
-        values = [0] * 24
-        for i in [4, 8, 12, 16, 22]:
-            values[i] = 1
-        
-        # Create trend chart
-        fig = px.bar(
-            x=hours,
-            y=values,
-            color_discrete_sequence=['#ff7f0e']
-        )
-        
-        # Add annotation for change
-        annotations = [
-            dict(
-                x=22, y=1,
-                text="+0.1",
-                showarrow=False,
-                font=dict(color="#4CAF50"),
-                bgcolor="#2E2E2E",
-                bordercolor="#4CAF50",
-                borderwidth=1,
-                borderpad=4
-            )
-        ]
-        
-        fig.update_layout(
-            height=100,
-            margin=dict(l=0, r=0, t=0, b=0, pad=0),
-            showlegend=False,
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white'),
-            xaxis=dict(showticklabels=False, showgrid=False),
-            yaxis=dict(showticklabels=False, showgrid=False, range=[0, 1.1]),
-            annotations=annotations
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+        st.markdown("""
+        <div class="feature-card">
+            <h3>AI-Powered Security Assistant</h3>
+            <ul>
+                <li>Get expert security insights and recommendations</li>
+                <li>Analyze security events and interpret alerts</li>
+                <li>Receive guidance on security best practices</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Display blockchain verification information
     st.markdown("---")
@@ -523,114 +479,14 @@ if app_mode == "Dashboard":
             """
             
             st.markdown(line_html, unsafe_allow_html=True)
-    
-    # Display if we have any actual results from model processing
-    if st.session_state.results is not None or st.session_state.user_behavior_results is not None or st.session_state.unknown_threat_results is not None:
-        st.markdown("---")
-        st.subheader("Detection Results")
-        
-        tab1, tab2, tab3 = st.tabs(["Known Attack Detection", "User Behavior Analysis", "Zero-Day Detection"])
-        
-        with tab1:
-            if st.session_state.results is not None:
-                # Get summary stats
-                total_logs = len(st.session_state.results)
-                detected_threats = sum(st.session_state.results['prediction'] != 0) if 'prediction' in st.session_state.results.columns else 0
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.metric("Total Logs", total_logs)
-                    st.metric("Detected Threats", detected_threats)
-                
-                with col2:
-                    # Display threat distribution
-                    if detected_threats > 0:
-                        fig = create_threat_distribution(st.session_state.results)
-                        st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("No known attack detection results available. Process some logs first in the Log Analysis tab.")
-        
-        with tab2:
-            if st.session_state.user_behavior_results is not None:
-                # Get summary stats
-                total_users = len(st.session_state.user_behavior_results['user_id'].unique())
-                anomalous_users = len(st.session_state.user_behavior_results[st.session_state.user_behavior_results['prediction'] == -1]['user_id'].unique())
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.metric("Total Users", total_users)
-                    st.metric("Anomalous Users", anomalous_users)
-                
-                with col2:
-                    # Display user behavior charts
-                    fig = create_user_behavior_charts(st.session_state.user_behavior_results)
-                    st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("No user behavior analysis results available. Process some user data first in the User Behavior Analysis tab.")
-        
-        with tab3:
-            if st.session_state.unknown_threat_results is not None:
-                # Get summary stats
-                total_logs = len(st.session_state.unknown_threat_results)
-                unknown_threats = len(st.session_state.unknown_threat_results[st.session_state.unknown_threat_results['category'] != 'Normal'])
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.metric("Total Logs", total_logs)
-                    st.metric("Unknown Threats", unknown_threats)
-                
-                with col2:
-                    # Display unknown threat categories
-                    if unknown_threats > 0:
-                        category_counts = st.session_state.unknown_threat_results[st.session_state.unknown_threat_results['category'] != 'Normal']['category'].value_counts().reset_index()
-                        category_counts.columns = ['Category', 'Count']
-                        
-                        fig = px.pie(
-                            category_counts,
-                            values='Count',
-                            names='Category',
-                            title='Unknown Threat Categories',
-                            color_discrete_sequence=px.colors.qualitative.Safe
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("No zero-day threat detection results available. Process some logs first in the Zero-Day Detection tab.")
-    else:
-        st.markdown("---")
-        st.info("No detection results available yet. Use the analysis tabs to process data and view results here.")
-        
-        # Project overview
-        st.markdown("---")
-        st.subheader("CyberSentry Overview")
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.image("https://images.unsplash.com/photo-1558494949-ef010cbdcc31", use_container_width=True)
-            st.subheader("Log Analysis")
-            st.write("Analyze logs for known attack patterns based on the UNSW dataset. Detect intrusions with high accuracy.")
-        
-        with col2:
-            st.image("https://images.unsplash.com/photo-1573164713988-8665fc963095", use_container_width=True)
-            st.subheader("User Behavior Analysis")
-            st.write("Track and detect anomalies in enterprise user behavior patterns using machine learning.")
-        
-        with col3:
-            st.image("https://images.unsplash.com/photo-1639322537228-f710d846310a", use_container_width=True)
-            st.subheader("Zero-Day Detection")
-            st.write("Identify previously unknown threats through advanced pattern recognition.")
 
 # Log Analysis mode
 elif app_mode == "Log Analysis":
     st.title("Enterprise Log Analysis")
     st.markdown("""
     <div style='background-color: #1E1E1E; padding: 15px; border-radius: 5px; margin-bottom: 20px;'>
-    <p>Upload raw system/application logs for advanced analysis. 
-    CyberSentry can parse common log formats including Apache/Nginx, Syslog, and JSON logs, providing detection of both
-    known attacks (according to the UNSW dataset) and unknown patterns.</p>
+    <p>Upload raw network traffic logs for advanced analysis using our LGBM model based on the UNSW dataset.
+    This module detects known network attack patterns with high accuracy.</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -660,67 +516,9 @@ elif app_mode == "Log Analysis":
                                height=250)
     
     elif input_method == "Use Sample Logs":
-        log_format = st.selectbox("Select log format:", ["Apache/Nginx", "Syslog", "JSON", "UNSW Network Logs"])
+        log_format = st.selectbox("Select log format:", ["UNSW Network Logs"])
         
-        if log_format == "Apache/Nginx":
-            try:
-                with open("data/sample_log_entries.txt", "r") as f:
-                    log_text = f.read()
-            except:
-                log_text = """192.168.1.100 - - [01/Jul/2023:15:42:31 +0000] "GET /index.html HTTP/1.1" 200 4523
-127.0.0.1 - - [01/Jul/2023:15:43:10 +0000] "POST /login HTTP/1.1" 302 354
-192.168.1.105 - - [01/Jul/2023:15:45:20 +0000] "GET /admin HTTP/1.1" 401 1293
-45.77.65.211 - - [01/Jul/2023:15:46:03 +0000] "GET /wp-login.php HTTP/1.1" 404 721
-192.168.1.102 - - [01/Jul/2023:15:46:22 +0000] "GET /images/logo.png HTTP/1.1" 200 5632
-31.44.99.102 - - [01/Jul/2023:15:47:15 +0000] "GET /admin.php HTTP/1.1" 404 892
-192.168.1.103 - - [01/Jul/2023:15:48:01 +0000] "GET /api/users HTTP/1.1" 200 1820
-198.23.124.108 - - [01/Jul/2023:15:49:32 +0000] "POST /api/login HTTP/1.1" 401 347
-192.168.1.110 - - [01/Jul/2023:15:50:18 +0000] "GET /download?file=../../../etc/passwd HTTP/1.1" 403 921
-192.168.1.105 - - [01/Jul/2023:15:51:43 +0000] "GET /dashboard HTTP/1.1" 200 8932
-89.44.11.204 - - [01/Jul/2023:15:52:29 +0000] "GET /.env HTTP/1.1" 404 651
-192.168.1.108 - - [01/Jul/2023:15:53:11 +0000] "GET /profile HTTP/1.1" 200 2341
-137.74.138.166 - - [01/Jul/2023:15:54:02 +0000] "GET /wp-config.php HTTP/1.1" 404 712
-192.168.1.107 - - [01/Jul/2023:15:55:18 +0000] "POST /api/upload HTTP/1.1" 200 412
-205.174.165.73 - - [01/Jul/2023:15:56:22 +0000] "POST /login HTTP/1.1" 200 328
-192.168.1.100 - - [01/Jul/2023:15:57:09 +0000] "GET /logout HTTP/1.1" 302 218"""
-        
-        elif log_format == "Syslog":
-            log_text = """Jul 01 15:42:31 webserver sshd[12345]: Failed password for invalid user admin from 45.77.65.211 port 58803 ssh2
-Jul 01 15:43:10 webserver sshd[12346]: Accepted password for user john from 192.168.1.100 port 59102 ssh2
-Jul 01 15:45:20 webserver sudo[12347]: john : TTY=pts/0 ; PWD=/home/john ; USER=root ; COMMAND=/bin/ls /root
-Jul 01 15:46:03 webserver sshd[12348]: Failed password for root from 31.44.99.102 port 51432 ssh2
-Jul 01 15:46:22 webserver sshd[12349]: Failed password for root from 31.44.99.102 port 51433 ssh2
-Jul 01 15:47:15 webserver sshd[12350]: Failed password for root from 31.44.99.102 port 51434 ssh2
-Jul 01 15:48:01 webserver kernel[1]: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=198.23.124.108 DST=192.168.1.1 LEN=40 TOS=0x00
-Jul 01 15:49:32 webserver apache2[12351]: [error] [client 192.168.1.105] File does not exist: /var/www/html/phpmyadmin
-Jul 01 15:50:18 webserver apache2[12352]: [error] [client 89.44.11.204] PHP Warning: include(/etc/passwd): failed to open stream
-Jul 01 15:51:43 webserver sshd[12353]: Accepted publickey for user alice from 192.168.1.103 port 60234 ssh2
-Jul 01 15:52:29 webserver kernel[1]: [UFW BLOCK] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=137.74.138.166 DST=192.168.1.1 LEN=40 TOS=0x00
-Jul 01 15:53:11 webserver proftpd[12354]: 192.168.1.108 (192.168.1.108[192.168.1.108]) - FTP session opened.
-Jul 01 15:54:02 webserver proftpd[12354]: 192.168.1.108 (192.168.1.108[192.168.1.108]) - FTP session closed.
-Jul 01 15:55:18 webserver kernel[1]: [UFW ALLOW] IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=192.168.1.107 DST=192.168.1.1 LEN=52 TOS=0x00
-Jul 01 15:56:22 webserver systemd[1]: Started Session 123 of user bob.
-Jul 01 15:57:09 webserver sshd[12355]: Disconnected from user bob 192.168.1.110 port 61001"""
-        
-        elif log_format == "JSON":
-            log_text = """{"timestamp": "2023-07-01T15:42:31Z", "level": "info", "message": "User login", "user": "john", "ip": "192.168.1.100", "status": "success"}
-{"timestamp": "2023-07-01T15:43:10Z", "level": "info", "message": "API request", "user": "john", "ip": "192.168.1.100", "endpoint": "/api/users", "method": "GET", "status_code": 200}
-{"timestamp": "2023-07-01T15:45:20Z", "level": "warning", "message": "Failed login attempt", "user": "admin", "ip": "45.77.65.211", "status": "failed", "reason": "Invalid credentials"}
-{"timestamp": "2023-07-01T15:46:03Z", "level": "error", "message": "Database connection error", "service": "user-service", "error": "Timeout"}
-{"timestamp": "2023-07-01T15:46:22Z", "level": "info", "message": "File download", "user": "alice", "ip": "192.168.1.103", "file": "report.pdf", "size": 1024576}
-{"timestamp": "2023-07-01T15:47:15Z", "level": "warning", "message": "Failed login attempt", "user": "root", "ip": "31.44.99.102", "status": "failed", "reason": "Invalid credentials"}
-{"timestamp": "2023-07-01T15:48:01Z", "level": "info", "message": "Configuration updated", "user": "admin", "ip": "192.168.1.105", "changes": {"timeout": 3600, "max_connections": 100}}
-{"timestamp": "2023-07-01T15:49:32Z", "level": "error", "message": "API rate limit exceeded", "user": "bob", "ip": "192.168.1.110", "endpoint": "/api/reports", "method": "GET"}
-{"timestamp": "2023-07-01T15:50:18Z", "level": "critical", "message": "Possible SQL injection attempt", "ip": "198.23.124.108", "endpoint": "/search", "query": "' OR 1=1; --"}
-{"timestamp": "2023-07-01T15:51:43Z", "level": "info", "message": "User logout", "user": "john", "ip": "192.168.1.100", "session_duration": 540}
-{"timestamp": "2023-07-01T15:52:29Z", "level": "warning", "message": "Access denied", "user": "guest", "ip": "89.44.11.204", "resource": "/admin/settings", "reason": "Insufficient permissions"}
-{"timestamp": "2023-07-01T15:53:11Z", "level": "info", "message": "File upload", "user": "alice", "ip": "192.168.1.103", "file": "presentation.pptx", "size": 2048576}
-{"timestamp": "2023-07-01T15:54:02Z", "level": "error", "message": "Service unavailable", "service": "email-service", "duration": 15.3, "error": "Connection refused"}
-{"timestamp": "2023-07-01T15:55:18Z", "level": "info", "message": "Password changed", "user": "bob", "ip": "192.168.1.110"}
-{"timestamp": "2023-07-01T15:56:22Z", "level": "critical", "message": "Multiple failed login attempts", "ip": "205.174.165.73", "attempts": 5, "timeframe": "5 minutes", "action": "IP blocked"}
-{"timestamp": "2023-07-01T15:57:09Z", "level": "info", "message": "System backup completed", "size": 1073741824, "duration": 120.5, "status": "success"}"""
-        
-        elif log_format == "UNSW Network Logs":
+        if log_format == "UNSW Network Logs":
             try:
                 df = pd.read_csv("data/sample_network_logs.csv")
                 st.session_state.logs_data = df
@@ -749,626 +547,316 @@ Jul 01 15:57:09 webserver sshd[12355]: Disconnected from user bob 192.168.1.110 
     
     # Now we have logs data in st.session_state.logs_data
     if st.session_state.logs_data is not None:
-        # Analysis tabs
-        tab1, tab2 = st.tabs(["Known Attack Analysis", "Unknown Threat Analysis"])
+        # Process with LGBM model if appropriate columns exist
+        required_columns = ['proto', 'service', 'dur', 'sbytes', 'dbytes', 'sttl', 'dttl']
+        missing_columns = [col for col in required_columns if col not in st.session_state.logs_data.columns]
         
-        with tab1:
-            st.subheader("Analysis using UNSW Dataset Model")
+        if missing_columns:
+            st.warning(f"The following columns required for LGBM analysis are missing: {', '.join(missing_columns)}")
+            st.info("The LGBM model requires network traffic data with specific features.")
             
-            # Process with LGBM model if appropriate columns exist
-            required_columns = ['proto', 'service', 'dur', 'sbytes', 'dbytes', 'sttl', 'dttl']
-            missing_columns = [col for col in required_columns if col not in st.session_state.logs_data.columns]
+            # Show column mapping if we have some other data
+            if len(st.session_state.logs_data.columns) > 3:
+                st.subheader("Map Available Columns")
+                st.write("Map your data columns to the required features:")
+                
+                col_mapping = {}
+                available_cols = list(st.session_state.logs_data.columns)
+                
+                for req_col in required_columns:
+                    mapped_col = st.selectbox(f"Map '{req_col}' to:", ["Skip"] + available_cols, key=f"map_{req_col}")
+                    if mapped_col != "Skip":
+                        col_mapping[req_col] = mapped_col
+                
+                if st.button("Process with Mapping"):
+                    # Create mapped dataframe
+                    mapped_df = pd.DataFrame()
+                    for req_col, mapped_col in col_mapping.items():
+                        mapped_df[req_col] = st.session_state.logs_data[mapped_col]
+                    
+                    # Fill missing columns with defaults
+                    for col in missing_columns:
+                        if col not in col_mapping:
+                            if col in ['sbytes', 'dbytes', 'sttl', 'dttl']:
+                                mapped_df[col] = 0
+                            elif col in ['dur']:
+                                mapped_df[col] = 1.0
+                            else:
+                                mapped_df[col] = "unknown"
+                    
+                    # Add source and destination IPs if available
+                    if 'src_ip' not in mapped_df and 'ip_address' in st.session_state.logs_data:
+                        mapped_df['src_ip'] = st.session_state.logs_data['ip_address']
+                    
+                    if 'dst_ip' not in mapped_df:
+                        mapped_df['dst_ip'] = "192.168.1.1"  # Default gateway
+                    
+                    # Process with LGBM model
+                    st.success("Created mapped dataframe for analysis")
+                    processed_df = st.session_state.data_processor.preprocess_network_data(mapped_df)
+                    
+                    try:
+                        with st.spinner("Analyzing network data with LGBM model..."):
+                            predictions = st.session_state.lgbm_model.predict(processed_df)
+                            probabilities = st.session_state.lgbm_model.predict_proba(processed_df)
+                            
+                            # Get prediction labels
+                            attack_categories = st.session_state.lgbm_model.attack_categories
+                            predicted_labels = predictions
+                            
+                            # Get category names for predictions
+                            predicted_categories = []
+                            for pred in predicted_labels:
+                                category = attack_categories.get(int(pred), "Unknown")
+                                predicted_categories.append(category)
+                            
+                            # Add predictions to the dataframe
+                            results_df = mapped_df.copy()
+                            results_df['prediction'] = predicted_labels
+                            results_df['predicted_attack_cat'] = predicted_categories
+                            
+                            # Calculate max probability for each prediction
+                            max_probs = np.max(probabilities, axis=1)
+                            results_df['probability'] = max_probs
+                            
+                            # Store results in session state
+                            st.session_state.results = results_df
+                            
+                            # Store in blockchain
+                            for index, row in results_df.iterrows():
+                                log_data = row.to_dict()
+                                st.session_state.blockchain_logger.add_log(log_data)
+                            
+                            st.success("Analysis complete! Network logs have been analyzed.")
+                    except Exception as e:
+                        st.error(f"Error analyzing network data: {str(e)}")
+                        st.info("The LGBM model may not be compatible with this data format.")
+        else:
+            # Process directly with LGBM model
+            try:
+                with st.spinner("Analyzing network data with LGBM model..."):
+                    processed_df = st.session_state.data_processor.preprocess_network_data(st.session_state.logs_data)
+                    
+                    predictions = st.session_state.lgbm_model.predict(processed_df)
+                    probabilities = st.session_state.lgbm_model.predict_proba(processed_df)
+                    
+                    # Get prediction labels
+                    attack_categories = st.session_state.lgbm_model.attack_categories
+                    predicted_labels = predictions
+                    
+                    # Get category names for predictions
+                    predicted_categories = []
+                    for pred in predicted_labels:
+                        category = attack_categories.get(int(pred), "Unknown")
+                        predicted_categories.append(category)
+                    
+                    # Add predictions to the dataframe
+                    results_df = st.session_state.logs_data.copy()
+                    results_df['prediction'] = predicted_labels
+                    results_df['predicted_attack_cat'] = predicted_categories
+                    
+                    # Calculate max probability for each prediction
+                    max_probs = np.max(probabilities, axis=1)
+                    results_df['probability'] = max_probs
+                    
+                    # Store results in session state
+                    st.session_state.results = results_df
+                    
+                    # Store in blockchain
+                    for index, row in results_df.iterrows():
+                        log_data = row.to_dict()
+                        st.session_state.blockchain_logger.add_log(log_data)
+                    
+                    st.success("Analysis complete! Network traffic has been analyzed for intrusions.")
+            except Exception as e:
+                st.error(f"Error analyzing network data: {str(e)}")
+                st.info("The LGBM model may not be compatible with this data format.")
+        
+        # If we have results, display them
+        if st.session_state.results is not None:
+            st.subheader("Known Attack Detection Results")
             
-            if missing_columns:
-                st.warning(f"The following columns required for LGBM analysis are missing: {', '.join(missing_columns)}")
-                st.info("The LGBM model requires network traffic data with specific features.")
-                
-                # Show column mapping if we have some other data
-                if len(st.session_state.logs_data.columns) > 3:
-                    st.subheader("Map Available Columns")
-                    st.write("Map your data columns to the required features:")
-                    
-                    col_mapping = {}
-                    available_cols = list(st.session_state.logs_data.columns)
-                    
-                    for req_col in required_columns:
-                        mapped_col = st.selectbox(f"Map '{req_col}' to:", ["Skip"] + available_cols, key=f"map_{req_col}")
-                        if mapped_col != "Skip":
-                            col_mapping[req_col] = mapped_col
-                    
-                    if st.button("Process with Mapping"):
-                        # Create mapped dataframe
-                        mapped_df = pd.DataFrame()
-                        for req_col, mapped_col in col_mapping.items():
-                            mapped_df[req_col] = st.session_state.logs_data[mapped_col]
-                        
-                        # Fill missing columns with defaults
-                        for col in missing_columns:
-                            if col not in col_mapping:
-                                if col in ['sbytes', 'dbytes', 'sttl', 'dttl']:
-                                    mapped_df[col] = 0
-                                elif col in ['dur']:
-                                    mapped_df[col] = 1.0
-                                else:
-                                    mapped_df[col] = "unknown"
-                        
-                        # Add source and destination IPs if available
-                        if 'src_ip' not in mapped_df and 'ip_address' in st.session_state.logs_data:
-                            mapped_df['src_ip'] = st.session_state.logs_data['ip_address']
-                        
-                        if 'dst_ip' not in mapped_df:
-                            mapped_df['dst_ip'] = "192.168.1.1"  # Default gateway
-                        
-                        # Process with LGBM model
-                        st.success("Created mapped dataframe for analysis")
-                        processed_df = st.session_state.data_processor.preprocess_network_data(mapped_df)
-                        
-                        try:
-                            with st.spinner("Analyzing network data with LGBM model..."):
-                                predictions = st.session_state.lgbm_model.predict(processed_df)
-                                probabilities = st.session_state.lgbm_model.predict_proba(processed_df)
-                                
-                                # Get prediction labels
-                                attack_categories = st.session_state.lgbm_model.attack_categories
-                                predicted_labels = predictions
-                                
-                                # Get category names for predictions
-                                predicted_categories = []
-                                for pred in predicted_labels:
-                                    category = attack_categories.get(int(pred), "Unknown")
-                                    predicted_categories.append(category)
-                                
-                                # Add predictions to the dataframe
-                                results_df = mapped_df.copy()
-                                results_df['prediction'] = predicted_labels
-                                results_df['predicted_attack_cat'] = predicted_categories
-                                
-                                # Calculate max probability for each prediction
-                                max_probs = np.max(probabilities, axis=1)
-                                results_df['probability'] = max_probs
-                                
-                                # Store results in session state
-                                st.session_state.results = results_df
-                                
-                                # Store in blockchain
-                                for index, row in results_df.iterrows():
-                                    log_data = row.to_dict()
-                                    st.session_state.blockchain_logger.add_log(log_data)
-                                
-                                st.success("Analysis complete! Network logs have been analyzed.")
-                        except Exception as e:
-                            st.error(f"Error analyzing network data: {str(e)}")
-                            st.info("The LGBM model may not be compatible with this data format.")
-            else:
-                # Process directly with LGBM model
-                try:
-                    with st.spinner("Analyzing network data with LGBM model..."):
-                        processed_df = st.session_state.data_processor.preprocess_network_data(st.session_state.logs_data)
-                        
-                        predictions = st.session_state.lgbm_model.predict(processed_df)
-                        probabilities = st.session_state.lgbm_model.predict_proba(processed_df)
-                        
-                        # Get prediction labels
-                        attack_categories = st.session_state.lgbm_model.attack_categories
-                        predicted_labels = predictions
-                        
-                        # Get category names for predictions
-                        predicted_categories = []
-                        for pred in predicted_labels:
-                            category = attack_categories.get(int(pred), "Unknown")
-                            predicted_categories.append(category)
-                        
-                        # Add predictions to the dataframe
-                        results_df = st.session_state.logs_data.copy()
-                        results_df['prediction'] = predicted_labels
-                        results_df['predicted_attack_cat'] = predicted_categories
-                        
-                        # Calculate max probability for each prediction
-                        max_probs = np.max(probabilities, axis=1)
-                        results_df['probability'] = max_probs
-                        
-                        # Store results in session state
-                        st.session_state.results = results_df
-                        
-                        # Store in blockchain
-                        for index, row in results_df.iterrows():
-                            log_data = row.to_dict()
-                            st.session_state.blockchain_logger.add_log(log_data)
-                        
-                        st.success("Analysis complete! Network traffic has been analyzed for intrusions.")
-                except Exception as e:
-                    st.error(f"Error analyzing network data: {str(e)}")
-                    st.info("The LGBM model may not be compatible with this data format.")
+            # Display metrics
+            total_logs = len(st.session_state.results)
+            detected_threats = sum(st.session_state.results['prediction'] != 0) if 'prediction' in st.session_state.results.columns else 0
+            detection_rate = (detected_threats / total_logs) * 100 if total_logs > 0 else 0
             
-            # If we have results, display them
-            if st.session_state.results is not None:
-                st.subheader("Known Attack Detection Results")
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total Logs", total_logs)
+            col2.metric("Detected Threats", detected_threats)
+            col3.metric("Detection Rate", f"{detection_rate:.2f}%")
+            
+            # Attack type distribution
+            if detected_threats > 0 and 'predicted_attack_cat' in st.session_state.results.columns:
+                st.subheader("Attack Type Distribution")
                 
-                # Display metrics
-                total_logs = len(st.session_state.results)
-                detected_threats = sum(st.session_state.results['prediction'] != 0) if 'prediction' in st.session_state.results.columns else 0
-                detection_rate = (detected_threats / total_logs) * 100 if total_logs > 0 else 0
+                col1, col2 = st.columns(2)
                 
-                col1, col2, col3 = st.columns(3)
-                col1.metric("Total Logs", total_logs)
-                col2.metric("Detected Threats", detected_threats)
-                col3.metric("Detection Rate", f"{detection_rate:.2f}%")
-                
-                # Attack type distribution
-                if detected_threats > 0 and 'predicted_attack_cat' in st.session_state.results.columns:
-                    st.subheader("Attack Type Distribution")
+                with col1:
+                    attack_counts = st.session_state.results['predicted_attack_cat'].value_counts()
                     
-                    col1, col2 = st.columns(2)
+                    fig = px.pie(
+                        values=attack_counts.values,
+                        names=attack_counts.index,
+                        title="Attack Type Distribution",
+                        color_discrete_sequence=px.colors.sequential.Plasma_r,
+                        hole=0.4
+                    )
                     
-                    with col1:
-                        attack_counts = st.session_state.results['predicted_attack_cat'].value_counts()
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                with col2:
+                    # Create a threat timeline
+                    if 'timestamp' in st.session_state.results.columns:
+                        # Use actual timestamps
+                        timeline_data = st.session_state.results[st.session_state.results['prediction'] != 0].copy()
+                        timeline_data['timestamp'] = pd.to_datetime(timeline_data['timestamp'])
+                        timeline_data = timeline_data.sort_values('timestamp')
                         
-                        fig = px.pie(
-                            values=attack_counts.values,
-                            names=attack_counts.index,
-                            title="Attack Type Distribution",
-                            color_discrete_sequence=px.colors.sequential.Plasma_r,
-                            hole=0.4
+                        # Group by timestamp with a frequency
+                        timeline_counts = timeline_data.resample('1H', on='timestamp').size().reset_index()
+                        timeline_counts.columns = ['timestamp', 'count']
+                        
+                        fig = px.line(
+                            timeline_counts,
+                            x='timestamp',
+                            y='count',
+                            title="Threat Timeline",
+                            markers=True
                         )
                         
                         st.plotly_chart(fig, use_container_width=True)
-                    
-                    with col2:
-                        # Create a threat timeline
-                        if 'timestamp' in st.session_state.results.columns:
-                            # Use actual timestamps
-                            timeline_data = st.session_state.results[st.session_state.results['prediction'] != 0].copy()
-                            timeline_data['timestamp'] = pd.to_datetime(timeline_data['timestamp'])
-                            timeline_data = timeline_data.sort_values('timestamp')
-                            
-                            # Group by timestamp with a frequency
-                            timeline_counts = timeline_data.resample('1H', on='timestamp').size().reset_index()
-                            timeline_counts.columns = ['timestamp', 'count']
-                            
-                            fig = px.line(
-                                timeline_counts,
-                                x='timestamp',
-                                y='count',
-                                title="Threat Timeline",
-                                markers=True
-                            )
-                            
-                            st.plotly_chart(fig, use_container_width=True)
-                        else:
-                            # Create artificial timeline data
-                            threat_categories = st.session_state.results['predicted_attack_cat'].unique()
-                            threat_category_counts = {cat: int(st.session_state.results[st.session_state.results['predicted_attack_cat'] == cat].shape[0]) for cat in threat_categories}
-                            
-                            # Create severity scale
-                            severity_map = {
-                                'Normal': 'Low', 
-                                'Generic': 'Medium',
-                                'Reconnaissance': 'Medium',
-                                'DoS': 'High',
-                                'Exploits': 'High',
-                                'Analysis': 'Medium',
-                                'Backdoor': 'Critical',
-                                'Shellcode': 'Critical',
-                                'Worms': 'Critical',
-                                'Fuzzers': 'Medium'
-                            }
-                            
-                            # Create scatter plot data
-                            scatter_data = []
-                            
-                            for cat in threat_categories:
-                                if cat != 'Normal':
-                                    severity = severity_map.get(cat, 'Medium')
-                                    count = threat_category_counts[cat]
-                                    
-                                    # Add jitter to create a more interesting visualization
-                                    for i in range(count):
-                                        x_jitter = np.random.uniform(-0.3, 0.3)
-                                        y_jitter = np.random.uniform(-0.3, 0.3)
-                                        
-                                        # Map severity to numeric value
-                                        if severity == 'Low':
-                                            severity_val = 1
-                                        elif severity == 'Medium':
-                                            severity_val = 2
-                                        elif severity == 'High':
-                                            severity_val = 3
-                                        else:  # Critical
-                                            severity_val = 4
-                                        
-                                        scatter_data.append({
-                                            'Category': cat,
-                                            'x': severity_val + x_jitter,
-                                            'y': count + y_jitter,
-                                            'Severity': severity
-                                        })
-                            
-                            if scatter_data:
-                                scatter_df = pd.DataFrame(scatter_data)
-                                
-                                fig = px.scatter(
-                                    scatter_df,
-                                    x='x',
-                                    y='y',
-                                    color='Severity',
-                                    symbol='Category',
-                                    size=[10] * len(scatter_df),
-                                    color_discrete_map={
-                                        'Low': '#4ECDC4',
-                                        'Medium': '#FFD166',
-                                        'High': '#FF6B6B',
-                                        'Critical': '#C1292E'
-                                    },
-                                    title="Attack Severity Analysis"
-                                )
-                                
-                                # Update layout
-                                fig.update_layout(
-                                    xaxis_title="Severity Level",
-                                    yaxis_title="Occurrence Count",
-                                    xaxis=dict(
-                                        tickmode='array',
-                                        tickvals=[1, 2, 3, 4],
-                                        ticktext=['Low', 'Medium', 'High', 'Critical']
-                                    )
-                                )
-                                
-                                st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Display table of attack types and mitigations
-                    st.subheader("Attack Types & Mitigations")
-                    
-                    # UNSW attack categories and recommended mitigations
-                    attack_mitigations = {
-                        "Normal": {
-                            "description": "Regular network traffic without malicious intent.",
-                            "mitigation": "No action required."
-                        },
-                        "Generic": {
-                            "description": "A technique that works against all block ciphers without regard to the algorithm specifics.",
-                            "mitigation": "Implement strong encryption with modern algorithms. Use TLS 1.3 and above. Rotate keys regularly."
-                        },
-                        "Exploits": {
-                            "description": "Exploiting a vulnerability to gain unauthorized access or privileges.",
-                            "mitigation": "Keep systems patched and updated. Implement vulnerability scanning. Use intrusion prevention systems."
-                        },
-                        "Fuzzers": {
-                            "description": "Attempts to inject malformed or unexpected data to find vulnerabilities.",
-                            "mitigation": "Implement input validation, use WAF (Web Application Firewall), and perform regular security testing."
-                        },
-                        "DoS": {
-                            "description": "Denial of Service attacks to make resources unavailable.",
-                            "mitigation": "Implement rate limiting, use DDoS protection services, configure resource quotas, and use traffic filtering."
-                        },
-                        "Reconnaissance": {
-                            "description": "Information gathering to map networks and identify vulnerabilities.",
-                            "mitigation": "Limit exposed information, use firewalls to block port scanning, implement network segmentation."
-                        },
-                        "Analysis": {
-                            "description": "Intrusive activities to understand system configurations.",
-                            "mitigation": "Implement least privilege, use IDS/IPS systems, limit service information disclosure."
-                        },
-                        "Backdoor": {
-                            "description": "Methods to bypass authentication and access systems.",
-                            "mitigation": "Use EDR solutions, implement application whitelisting, perform regular security audits."
-                        },
-                        "Shellcode": {
-                            "description": "Small pieces of code used as payload in exploitation.",
-                            "mitigation": "Use ASLR, DEP, and other memory protection mechanisms. Keep systems patched."
-                        },
-                        "Worms": {
-                            "description": "Self-replicating malware that spreads across networks.",
-                            "mitigation": "Use endpoint protection, segment networks, implement proper firewall rules."
-                        }
+                    else:
+                        # Create artificial timeline data based on attack categories
+                        categories = st.session_state.results['predicted_attack_cat'].unique()
+                        
+                        # Create bar chart for attack types
+                        attack_counts_df = pd.DataFrame({
+                            'Category': attack_counts.index,
+                            'Count': attack_counts.values
+                        })
+                        
+                        fig = px.bar(
+                            attack_counts_df,
+                            x='Category',
+                            y='Count',
+                            title="Attack Categories",
+                            color='Category',
+                            color_discrete_sequence=px.colors.qualitative.Bold
+                        )
+                        
+                        fig.update_layout(
+                            xaxis_title="Attack Type",
+                            yaxis_title="Count"
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
+                
+                # Display table of attack types and mitigations
+                st.subheader("Attack Types & Mitigations")
+                
+                # UNSW attack categories and recommended mitigations
+                attack_mitigations = {
+                    "Normal": {
+                        "description": "Regular network traffic without malicious intent.",
+                        "mitigation": "No action required."
+                    },
+                    "Generic": {
+                        "description": "A technique that works against all block ciphers without regard to the algorithm specifics.",
+                        "mitigation": "Implement strong encryption with modern algorithms. Use TLS 1.3 and above. Rotate keys regularly."
+                    },
+                    "Exploits": {
+                        "description": "Exploiting a vulnerability to gain unauthorized access or privileges.",
+                        "mitigation": "Keep systems patched and updated. Implement vulnerability scanning. Use intrusion prevention systems."
+                    },
+                    "Fuzzers": {
+                        "description": "Attempts to inject malformed or unexpected data to find vulnerabilities.",
+                        "mitigation": "Implement input validation, use WAF (Web Application Firewall), and perform regular security testing."
+                    },
+                    "DoS": {
+                        "description": "Denial of Service attacks to make resources unavailable.",
+                        "mitigation": "Implement rate limiting, use DDoS protection services, configure resource quotas, and use traffic filtering."
+                    },
+                    "Reconnaissance": {
+                        "description": "Information gathering to map networks and identify vulnerabilities.",
+                        "mitigation": "Limit exposed information, use firewalls to block port scanning, implement network segmentation."
+                    },
+                    "Analysis": {
+                        "description": "Intrusive activities to understand system configurations.",
+                        "mitigation": "Implement least privilege, use IDS/IPS systems, limit service information disclosure."
+                    },
+                    "Backdoor": {
+                        "description": "Methods to bypass authentication and access systems.",
+                        "mitigation": "Use EDR solutions, implement application whitelisting, perform regular security audits."
+                    },
+                    "Shellcode": {
+                        "description": "Small pieces of code used as payload in exploitation.",
+                        "mitigation": "Use ASLR, DEP, and other memory protection mechanisms. Keep systems patched."
+                    },
+                    "Worms": {
+                        "description": "Self-replicating malware that spreads across networks.",
+                        "mitigation": "Use endpoint protection, segment networks, implement proper firewall rules."
                     }
-                    
-                    # Get unique attack categories
-                    unique_attacks = st.session_state.results['predicted_attack_cat'].unique()
-                    
-                    # Create table
-                    attack_data = []
-                    for attack in unique_attacks:
-                        if attack in attack_mitigations:
-                            attack_data.append({
-                                "Attack Type": attack,
-                                "Description": attack_mitigations[attack]["description"],
-                                "Count": st.session_state.results['predicted_attack_cat'].value_counts()[attack],
-                                "Mitigation": attack_mitigations[attack]["mitigation"]
-                            })
-                        else:
-                            attack_data.append({
-                                "Attack Type": attack,
-                                "Description": "Unknown attack type",
-                                "Count": st.session_state.results['predicted_attack_cat'].value_counts()[attack],
-                                "Mitigation": "Monitor and investigate further."
-                            })
-                    
-                    # Sort by count
-                    attack_data = sorted(attack_data, key=lambda x: x["Count"], reverse=True)
-                    
-                    # Display as table
-                    attack_df = pd.DataFrame(attack_data)
-                    st.dataframe(attack_df, use_container_width=True)
-                    
-                    # Generate AI recommendations
-                    st.subheader("AI Security Recommendations")
-                    
-                    if "DoS" in unique_attacks or "Reconnaissance" in unique_attacks or "Exploits" in unique_attacks:
-                        most_severe = next((a for a in ["DoS", "Exploits", "Reconnaissance", "Backdoor", "Worms"] if a in unique_attacks), unique_attacks[0])
-                        
-                        # Get sample log for this attack
-                        sample_log = st.session_state.results[st.session_state.results['predicted_attack_cat'] == most_severe].iloc[0].to_dict()
-                        
-                        with st.spinner("Generating AI recommendations..."):
-                            try:
-                                recommendation = get_gemini_recommendation(most_severe, sample_log)
-                                st.info(recommendation)
-                            except Exception as e:
-                                st.warning(f"Could not generate AI recommendations: {str(e)}")
+                }
+                
+                # Get unique attack categories
+                unique_attacks = st.session_state.results['predicted_attack_cat'].unique()
+                
+                # Create table
+                attack_data = []
+                for attack in unique_attacks:
+                    if attack in attack_mitigations:
+                        attack_data.append({
+                            "Attack Type": attack,
+                            "Description": attack_mitigations[attack]["description"],
+                            "Count": st.session_state.results['predicted_attack_cat'].value_counts()[attack],
+                            "Mitigation": attack_mitigations[attack]["mitigation"]
+                        })
                     else:
-                        st.info("No high-severity attacks detected to generate recommendations.")
+                        attack_data.append({
+                            "Attack Type": attack,
+                            "Description": "Unknown attack type",
+                            "Count": st.session_state.results['predicted_attack_cat'].value_counts()[attack],
+                            "Mitigation": "Monitor and investigate further."
+                        })
                 
-                # Filter options
-                st.subheader("View Log Details")
-                show_option = st.radio("Show:", ["All", "Only Threats", "Only Normal"], key="known_filter")
+                # Sort by count
+                attack_data = sorted(attack_data, key=lambda x: x["Count"], reverse=True)
                 
-                filtered_df = st.session_state.results
-                if show_option == "Only Threats":
-                    filtered_df = st.session_state.results[st.session_state.results['prediction'] != 0]
-                elif show_option == "Only Normal":
-                    filtered_df = st.session_state.results[st.session_state.results['prediction'] == 0]
+                # Display as table
+                attack_df = pd.DataFrame(attack_data)
+                st.dataframe(attack_df, use_container_width=True)
                 
-                # Display filtered results
-                st.dataframe(filtered_df, use_container_width=True)
+                # Generate AI recommendations
+                st.subheader("AI Security Recommendations")
+                
+                if "DoS" in unique_attacks or "Reconnaissance" in unique_attacks or "Exploits" in unique_attacks:
+                    most_severe = next((a for a in ["DoS", "Exploits", "Reconnaissance", "Backdoor", "Worms"] if a in unique_attacks), unique_attacks[0])
                     
-        
-        with tab2:
-            st.subheader("Unknown Threat Detection")
-            
-            # Initialize and train the unknown threat detector
-            with st.spinner("Analyzing logs for unknown threats..."):
-                try:
-                    detector = st.session_state.unknown_threat_detector
+                    # Get sample log for this attack
+                    sample_log = st.session_state.results[st.session_state.results['predicted_attack_cat'] == most_severe].iloc[0].to_dict()
                     
-                    # Process in batches for larger datasets
-                    results = []
-                    logs_df = st.session_state.logs_data
-                    
-                    for i in range(0, len(logs_df), 20):
-                        batch = logs_df.iloc[i:i+20].copy()
-                        
+                    with st.spinner("Generating AI recommendations..."):
                         try:
-                            batch_results = detector.detect_batch(batch)
-                            results.append(batch_results)
+                            recommendation = get_gemini_recommendation(most_severe, sample_log)
+                            st.info(recommendation)
                         except Exception as e:
-                            st.error(f"Error analyzing batch: {str(e)}")
-                    
-                    if results:
-                        all_results = pd.concat(results, ignore_index=True)
-                        
-                        # Add original data columns
-                        for col in logs_df.columns:
-                            if col not in all_results.columns and len(all_results) == len(logs_df):
-                                all_results[col] = logs_df[col].values
-                        
-                        # Store in blockchain
-                        for index, row in all_results.iterrows():
-                            log_data = row.to_dict()
-                            st.session_state.blockchain_logger.add_log(log_data)
-                        
-                        # Save results to session state
-                        st.session_state.unknown_threat_results = all_results
-                        
-                        st.success("Analysis complete! Logs have been analyzed for unknown threats.")
-                    else:
-                        st.warning("No valid results obtained from unknown threat analysis.")
-                except Exception as e:
-                    st.error(f"Error in unknown threat analysis: {str(e)}")
+                            st.warning(f"Could not generate AI recommendations: {str(e)}")
+                else:
+                    st.info("No high-severity attacks detected to generate recommendations.")
             
-            # If we have results, display them
-            if st.session_state.unknown_threat_results is not None:
-                # Display metrics
-                total_logs = len(st.session_state.unknown_threat_results)
-                threats = st.session_state.unknown_threat_results[st.session_state.unknown_threat_results['category'] != 'Normal']
-                total_threats = len(threats)
-                threat_rate = (total_threats / total_logs) * 100 if total_logs > 0 else 0
-                
-                col1, col2, col3 = st.columns(3)
-                col1.metric("Total Logs", total_logs)
-                col2.metric("Detected Unknown Threats", total_threats)
-                col3.metric("Unknown Threat Rate", f"{threat_rate:.2f}%")
-                
-                # Create detections based on threat categories from the unknownThreat_detector
-                if total_threats > 0:
-                    # Display threat categories in nice cards like the reference image
-                    st.subheader("Anomaly Details")
-                    
-                    # Create summary cards for the top 3 categories
-                    category_counts = threats['category'].value_counts()
-                    top_categories = category_counts.head(3)
-                    
-                    if len(top_categories) > 0:
-                        cols = st.columns(min(3, len(top_categories)))
-                        
-                        for i, (category, count) in enumerate(top_categories.items()):
-                            # Get a description for this category
-                            if category == 'Credential Stuffing':
-                                description = "Unusual login patterns or authentication failures detected."
-                            elif category == 'API Abuse':
-                                description = "API endpoints abused or unusual API call patterns detected."
-                            elif category == 'Cloud Misconfig':
-                                description = "Critical configuration changes detected outside normal procedures."
-                            elif category == 'Lateral Movement':
-                                description = "Suspicious network movement between internal systems detected."
-                            elif category == 'Data Exfiltration':
-                                description = "Unusual data transfer patterns or unauthorized access to sensitive data."
-                            elif category == 'Web Attacks':
-                                description = "Web application attack patterns like SQL injection or XSS detected."
-                            else:
-                                description = f"{category} patterns detected in logs."
-                            
-                            display_anomaly_detail(
-                                f"{category} Anomalies", 
-                                str(count), 
-                                description, 
-                                cols[i]
-                            )
-                        
-                        # Show trend charts
-                        st.subheader("Threat Trends")
-                        
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            # Create pie chart
-                            category_counts_df = pd.DataFrame({
-                                'Category': category_counts.index,
-                                'Count': category_counts.values
-                            })
-                            
-                            fig = px.pie(
-                                category_counts_df,
-                                values='Count',
-                                names='Category',
-                                title='Threat Categories',
-                                color_discrete_sequence=px.colors.qualitative.Bold,
-                                hole=0.4
-                            )
-                            
-                            fig.update_layout(
-                                height=400,
-                                margin=dict(l=20, r=20, t=40, b=20),
-                                legend=dict(orientation="h", y=-0.2),
-                                plot_bgcolor='rgba(0,0,0,0)',
-                                paper_bgcolor='rgba(0,0,0,0)',
-                                font=dict(color='white')
-                            )
-                            
-                            st.plotly_chart(fig, use_container_width=True)
-                        
-                        with col2:
-                            # Create confidence distribution
-                            confidence_bins = pd.cut(
-                                threats['confidence'], 
-                                bins=[0, 1, 2, 3, 4],
-                                labels=['Low', 'Medium', 'High', 'Critical'],
-                                include_lowest=True
-                            )
-                            
-                            confidence_counts = confidence_bins.value_counts().reset_index()
-                            confidence_counts.columns = ['Confidence', 'Count']
-                            
-                            # Sort by severity
-                            severity_order = {
-                                'Low': 0, 
-                                'Medium': 1, 
-                                'High': 2, 
-                                'Critical': 3
-                            }
-                            confidence_counts['order'] = confidence_counts['Confidence'].map(severity_order)
-                            confidence_counts = confidence_counts.sort_values('order')
-                            
-                            fig = px.bar(
-                                confidence_counts,
-                                x='Confidence',
-                                y='Count',
-                                title='Severity Distribution',
-                                color='Confidence',
-                                color_discrete_map={
-                                    'Low': '#4ECDC4',
-                                    'Medium': '#FFD166',
-                                    'High': '#FF6B6B',
-                                    'Critical': '#C1292E'
-                                }
-                            )
-                            
-                            fig.update_layout(
-                                height=400,
-                                margin=dict(l=20, r=20, t=40, b=20),
-                                showlegend=False,
-                                plot_bgcolor='rgba(0,0,0,0)',
-                                paper_bgcolor='rgba(0,0,0,0)',
-                                font=dict(color='white'),
-                                xaxis=dict(categoryorder='array', categoryarray=['Low', 'Medium', 'High', 'Critical'])
-                            )
-                            
-                            st.plotly_chart(fig, use_container_width=True)
-                        
-                        # Threat categories and descriptions
-                        st.subheader("Unknown Threat Categories & Descriptions")
-                        
-                        threat_descriptions = {
-                            "Credential Stuffing": "Attackers use compromised credentials from one service to gain access to another. Often automated with large lists of username/password combinations.",
-                            "API Abuse": "Exploitation of APIs through excessive requests, manipulating parameters, or accessing unauthorized endpoints.",
-                            "Cloud Misconfig": "Security vulnerabilities caused by improper configuration of cloud resources, often exposing sensitive data or services.",
-                            "Lateral Movement": "Techniques used by attackers to move through a network after gaining initial access, seeking to expand their control or access sensitive data.",
-                            "Cryptojacking": "Unauthorized use of computing resources to mine cryptocurrency, often implemented through compromised websites or malware.",
-                            "Supply Chain": "Attacks targeting less-secure elements in the supply chain to gain access to a primary target, such as compromising a third-party library or service.",
-                            "Data Exfiltration": "Unauthorized data transfer from a system, often to external systems controlled by attackers.",
-                            "Privilege Escalation": "Techniques to gain higher-level permissions than initially granted, exploiting vulnerabilities or misconfigurations.",
-                            "Web Attacks": "Exploiting vulnerabilities in web applications including SQL injection, XSS, CSRF, etc.",
-                            "Uncategorized Threat": "Anomalous patterns detected but not matching known attack signatures, requiring further investigation.",
-                        }
-                        
-                        # Get unique categories
-                        unique_categories = threats['category'].unique()
-                        
-                        # Create table data
-                        categories_data = []
-                        for category in unique_categories:
-                            category_threats = threats[threats['category'] == category]
-                            count = len(category_threats)
-                            avg_confidence = category_threats['confidence'].mean()
-                            
-                            # Determine recommended actions
-                            if category == "Credential Stuffing":
-                                mitigation = "Implement multi-factor authentication and account lockout policies. Monitor for brute force attempts."
-                            elif category == "API Abuse":
-                                mitigation = "Implement rate limiting, API keys, and proper authentication. Monitor API usage patterns."
-                            elif category == "Cloud Misconfig":
-                                mitigation = "Implement security baselines, conduct regular audits, and use infrastructure as code with security checks."
-                            elif category == "Lateral Movement":
-                                mitigation = "Implement network segmentation, principle of least privilege, and monitor east-west traffic."
-                            elif category == "Cryptojacking":
-                                mitigation = "Monitor for unusual CPU usage, implement application whitelisting, keep systems patched."
-                            elif category == "Supply Chain":
-                                mitigation = "Verify integrity of dependencies, limit third-party access, implement vendor security requirements."
-                            elif category == "Data Exfiltration":
-                                mitigation = "Implement DLP solutions, monitor for unusual data transfers, encrypt sensitive data."
-                            elif category == "Privilege Escalation":
-                                mitigation = "Implement principle of least privilege, regular permission audits, and monitor for unusual privilege changes."
-                            elif category == "Web Attacks":
-                                mitigation = "Implement WAF, input validation, output encoding, and regular security testing."
-                            else:
-                                mitigation = "Investigate further to determine the nature of this anomaly and establish appropriate controls."
-                            
-                            categories_data.append({
-                                "Category": category,
-                                "Description": threat_descriptions.get(category, "Unknown threat pattern requiring investigation"),
-                                "Count": count,
-                                "Avg. Confidence": f"{avg_confidence:.2f}",
-                                "Recommended Action": mitigation
-                            })
-                        
-                        # Sort by count
-                        categories_data = sorted(categories_data, key=lambda x: x["Count"], reverse=True)
-                        
-                        # Display as table
-                        categories_df = pd.DataFrame(categories_data)
-                        st.dataframe(categories_df, use_container_width=True)
-                
-                # Filter options
-                st.subheader("View Log Details")
-                show_option = st.radio("Show:", ["All", "Only Threats", "Only Normal"], key="unknown_filter")
-                
-                filtered_df = st.session_state.unknown_threat_results
-                if show_option == "Only Threats":
-                    filtered_df = threats
-                elif show_option == "Only Normal":
-                    filtered_df = st.session_state.unknown_threat_results[st.session_state.unknown_threat_results['category'] == 'Normal']
-                
-                # Display filtered results
-                st.dataframe(filtered_df, use_container_width=True)
+            # Filter options
+            st.subheader("View Log Details")
+            show_option = st.radio("Show:", ["All", "Only Threats", "Only Normal"], key="known_filter")
+            
+            filtered_df = st.session_state.results
+            if show_option == "Only Threats":
+                filtered_df = st.session_state.results[st.session_state.results['prediction'] != 0]
+            elif show_option == "Only Normal":
+                filtered_df = st.session_state.results[st.session_state.results['prediction'] == 0]
+            
+            # Display filtered results
+            st.dataframe(filtered_df, use_container_width=True)
 
 # User Behavior Analysis mode
 elif app_mode == "User Behavior Analysis":
@@ -1385,10 +873,7 @@ elif app_mode == "User Behavior Analysis":
     # First show model metrics before any data is processed
     st.subheader("Model Performance Metrics")
     
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Isolation Forest Accuracy", "92%")
-    col2.metric("Detection Precision", "89%")
-    col3.metric("False Positive Rate", "7.5%")
+    st.markdown(st.session_state.user_behavior_model.get_model_metrics_html(), unsafe_allow_html=True)
     
     # User behavior filter options
     col1, col2 = st.columns(2)
@@ -1426,8 +911,12 @@ elif app_mode == "User Behavior Analysis":
             # Try to load from file with anomalies
             uploaded_file = open("data/sample_user_behavior_anomalies.csv", "r")
         except:
-            # Use the built-in sample if file doesn't exist
-            sample_data = """timestamp,user_id,ip_address,action,resource,duration,bytes_transferred,location,device_type,session_count,failed_attempts,risk_score
+            try:
+                # Try alternative file
+                uploaded_file = open("data/sample_user_behavior.csv", "r")
+            except:
+                # Use the built-in sample if file doesn't exist
+                sample_data = """timestamp,user_id,ip_address,action,resource,duration,bytes_transferred,location,device_type,session_count,failed_attempts,risk_score
 2023-07-01T08:30:00Z,john.doe,192.168.1.100,login,/dashboard,300,5000,New York,desktop,1,0,0.1
 2023-07-01T09:15:00Z,john.doe,192.168.1.100,view,/reports,450,8000,New York,desktop,1,0,0.1
 2023-07-01T10:20:00Z,john.doe,192.168.1.100,download,/reports/q2_finance.pdf,120,2500000,New York,desktop,1,0,0.2
@@ -1452,18 +941,9 @@ elif app_mode == "User Behavior Analysis":
 2023-07-01T03:30:00Z,jane.smith,113.100.142.22,view,/admin/settings,220,4200,Beijing,unknown,1,0,0.8
 2023-07-01T02:45:00Z,admin,45.77.65.211,login,/admin,190,4100,Kiev,unknown,1,3,0.95
 2023-07-01T02:55:00Z,admin,45.77.65.211,edit,/admin/users/roles,320,25000,Kiev,unknown,1,0,0.9
-2023-07-01T03:05:00Z,admin,45.77.65.211,edit,/admin/config,280,35000,Kiev,unknown,1,0,0.87
-2023-07-01T03:25:00Z,jane.smith,113.100.142.22,edit,/admin/database,450,95000,Beijing,unknown,1,0,0.91
-2023-07-01T04:10:00Z,jane.smith,113.100.142.22,download,/admin/backup.zip,180,15000000,Beijing,unknown,1,0,0.94
-2023-07-01T22:30:00Z,john.doe,185.143.223.45,edit,/admin/users/delete,120,7800,Moscow,mobile,1,0,0.88
-2023-07-01T23:05:00Z,john.doe,185.143.223.45,view,/admin/logs,220,12000,Moscow,mobile,1,0,0.84
-2023-07-01T23:30:00Z,john.doe,185.143.223.45,download,/admin/logs.zip,180,9000000,Moscow,mobile,1,0,0.92
-2023-07-02T00:15:00Z,unknown.user,139.162.119.197,login,/login,120,3200,Bucharest,unknown,1,5,0.97
-2023-07-02T00:25:00Z,unknown.user,139.162.119.197,view,/admin,150,4300,Bucharest,unknown,1,0,0.93
-2023-07-02T00:40:00Z,unknown.user,139.162.119.197,download,/admin/config.json,90,350000,Bucharest,unknown,1,0,0.98
-2023-07-02T01:10:00Z,unknown.user,139.162.119.197,view,/admin/users,130,6800,Bucharest,unknown,1,0,0.96"""
-            
-            uploaded_file = StringIO(sample_data)
+2023-07-01T03:05:00Z,admin,45.77.65.211,edit,/admin/config,280,35000,Kiev,unknown,1,0,0.87"""
+                
+                uploaded_file = StringIO(sample_data)
     
     if uploaded_file is not None:
         # Load and process data
@@ -1486,11 +966,30 @@ elif app_mode == "User Behavior Analysis":
             user_features = st.session_state.data_processor.extract_user_behavior_features(processed_df)
             
             # Train or load user behavior model with lower contamination for better anomaly detection
-            st.session_state.user_behavior_model = UserBehaviorAnalyzer()
+            st.session_state.user_behavior_model = UserBehaviorModel()
             st.session_state.user_behavior_model.train(user_features, contamination=0.2)  # Higher contamination for better detection
             
             # Make predictions
             predictions = st.session_state.user_behavior_model.predict(user_features)
+            
+            # Calculate anomaly scores
+            anomaly_scores = st.session_state.user_behavior_model.predict_anomaly_scores(user_features)
+            
+            # Create results dataframe
+            results_df = pd.DataFrame({
+                'user_id': processed_df['user_id'],
+                'prediction': predictions,
+                'anomaly_score': anomaly_scores
+            })
+            
+            if 'ip_address' in processed_df.columns:
+                results_df['ip_address'] = processed_df['ip_address']
+            
+            if 'location' in processed_df.columns:
+                results_df['location'] = processed_df['location']
+            
+            if 'risk_score' in processed_df.columns:
+                results_df['risk_score'] = processed_df['risk_score']
             
             # Store in blockchain
             for index, row in processed_df.iterrows():
@@ -1498,13 +997,13 @@ elif app_mode == "User Behavior Analysis":
                 st.session_state.blockchain_logger.add_log(log_data)
             
             # Save results to session state
-            st.session_state.user_behavior_results = predictions
+            st.session_state.user_behavior_results = results_df
             
             # Success message
             st.success("Analysis complete! User behavior has been analyzed and verified.")
     
     # If results are available, display them
-    if st.session_state.user_behavior_results is not None:
+    if st.session_state.user_behavior_results is not None and st.session_state.user_data is not None:
         st.subheader("Activity Timeline")
         
         # Create data for user activity timeline
@@ -1628,10 +1127,13 @@ elif app_mode == "User Behavior Analysis":
                     user_data = st.session_state.user_data[st.session_state.user_data['user_id'] == user_id]
                     
                     # Look for high risk scores, unusual locations, or failed attempts
+                    risk_threshold = 0.5
+                    location_normal = ['New York', 'Chicago', 'Seattle']
+                    
                     unusual_activities = user_data[
-                        (user_data.get('risk_score', 0) > 0.5) | 
-                        (user_data.get('failed_attempts', 0) > 0) | 
-                        (~user_data['location'].isin(['New York', 'Chicago', 'Seattle']))
+                        (user_data['risk_score'] > risk_threshold) | 
+                        (user_data['failed_attempts'] > 0) | 
+                        (~user_data['location'].isin(location_normal))
                     ]
                     
                     for _, row in unusual_activities.iterrows():
@@ -1765,6 +1267,10 @@ elif app_mode == "User Behavior Analysis":
                 """
                 
                 st.markdown(recommendations)
+            else:
+                st.info("No specific anomalous activities identified. The anomalies are based on overall behavior patterns.")
+        else:
+            st.info("No anomalous user behavior detected in the analyzed data.")
         
         # Display all user behavior results
         st.subheader("All User Analysis Results")
@@ -1776,17 +1282,14 @@ elif app_mode == "Zero-Day Detection":
     st.markdown("""
     <div style='background-color: #1E1E1E; padding: 15px; border-radius: 5px; margin-bottom: 20px;'>
     <p>Detect previously unknown (zero-day) threats using advanced pattern recognition with our Isolation Forest model. 
-    The system can identify suspicious patterns that don't match known attack signatures with a 90% detection rate.</p>
+    The system analyzes log patterns to identify suspicious activities that don't match known attack signatures.</p>
     </div>
     """, unsafe_allow_html=True)
     
     # First show model metrics before any data is processed
     st.subheader("Model Performance Metrics")
     
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Isolation Forest Accuracy", "90%")
-    col2.metric("Pattern Recognition Precision", "87%")
-    col3.metric("False Positive Rate", "8.2%")
+    st.markdown(st.session_state.isolation_forest_model.get_model_metrics_html(), unsafe_allow_html=True)
     
     # Input options as with other sections
     input_method = st.radio("Select input method:", ["Upload Log Data", "Enter Sample Logs", "Use Sample Dataset"])
@@ -2128,9 +1631,10 @@ Firewall rule modification detected outside change window"""
                             <p><strong>Log:</strong> {threat['message'][:100]}...</p>
                             <p><strong>Confidence:</strong> {threat['confidence']:.2f}/3.0</p>
                             <p><strong>Evidence:</strong> {', '.join(threat['evidence'])}</p>
-                            <p><strong>Recommended Action:</strong> {mitigation}</p>
+                            <p><strong>Recommended Action:</strong> {categories_data[0]["Recommended Action"] if categories_data else "Investigate immediately"}</p>
                         </div>
                         """
+                        
                         st.markdown(alert_html, unsafe_allow_html=True)
         
         # Filter options
