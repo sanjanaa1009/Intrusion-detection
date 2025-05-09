@@ -80,6 +80,12 @@ class LGBMClassifier:
             'dpkts': 0
         }
 
+        # Ensure all required feature columns exist
+        if isinstance(data, pd.DataFrame):
+            for col, default_val in expected_features.items():
+                if col not in data.columns:
+                    data[col] = default_val
+
         # Create a clean dataframe with default values for all expected columns
         result_df = pd.DataFrame({
             col: [val] * len(data)
