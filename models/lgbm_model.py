@@ -77,7 +77,12 @@ class LGBMClassifier:
             'sinpkt': 0,
             'dinpkt': 0,
             'spkts': 0,
-            'dpkts': 0
+            'dpkts': 0,
+            
+            # Additional required features
+            'state': 'established',  # Explicitly include state
+            'spkts': 0,  # Ensure spkts is included
+            'dpkts': 0   # Ensure dpkts is included
         }
 
         # Ensure all required feature columns exist
