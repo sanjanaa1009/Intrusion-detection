@@ -9,7 +9,12 @@ def initialize_gemini_api():
     api_key = os.environ.get("GEMINI_API_KEY")
     if api_key:
         try:
-            genai.configure(api_key=api_key)
+            genai.configure(api_key=api_key,
+                          transport="rest",
+                          api_endpoint="generativelanguage.googleapis.com")
+            # Verify API access
+            model = genai.GenerativeModel('gemini-pro')
+            response = model.generate_content("Test connection")
             return True
         except Exception as e:
             print(f"Error initializing Gemini API: {str(e)}")
