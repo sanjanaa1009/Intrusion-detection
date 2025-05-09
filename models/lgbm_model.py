@@ -456,12 +456,16 @@ class LGBMClassifier:
     def predict(self, X):
         """
         Make predictions with the model
+        Handles both labeled and unlabeled data
         """
         if self.model is None:
             raise ValueError(
                 "Model not initialized. Call initialize_model() first.")
 
         # Process features
+        if 'attack_cat' in X.columns:
+            X = X.drop(['attack_cat', 'label'], axis=1, errors='ignore')
+            
         X_processed = self.preprocess_data(X)
 
         # Make predictions
