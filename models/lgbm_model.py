@@ -16,6 +16,7 @@ import io
 import base64
 from typing import cast
 import joblib
+from sklearn.preprocessing import LabelBinarizer
 
 # Since we're having issues with LightGBM dependencies,
 # we'll use scikit-learn's HistGradientBoostingClassifier which is similar
@@ -58,12 +59,12 @@ class LGBMClassifier:
             'dst_ip': '0.0.0.0',
             'src_subnet': '0',  # Derived from src_ip
             'dst_subnet': '0',  # Derived from dst_ip
-            
+
             # Categorical features
             'proto': 'tcp',
             'service': 'http',
             'state': 'established',
-            
+
             # Numeric features
             'dur': 0.0,
             'sbytes': 0,
@@ -78,26 +79,33 @@ class LGBMClassifier:
             'spkts': 0,
             'dpkts': 0
         }
-        
+
         # Create a clean dataframe with default values for all expected columns
-        result_df = pd.DataFrame({col: [val] * len(data) for col, val in expected_features.items()})
-        
+        result_df = pd.DataFrame({
+            col: [val] * len(data)
+            for col, val in expected_features.items()
+        })
+
         # Copy data from input dataframe where columns match
         for col in expected_features:
             if col in data.columns:
                 result_df[col] = data[col]
-                
+
         # Special IP processing - derive subnet from IP addresses
         if 'src_ip' in data.columns:
             result_df['src_subnet'] = data['src_ip'].astype(str).apply(
-                lambda x: x.split('.')[0] if '.' in x and len(x.split('.')) >= 1 else '0')
-        
+                lambda x: x.split('.')[0]
+                if '.' in x and len(x.split('.')) >= 1 else '0')
+
         if 'dst_ip' in data.columns:
             result_df['dst_subnet'] = data['dst_ip'].astype(str).apply(
-                lambda x: x.split('.')[0] if '.' in x and len(x.split('.')) >= 1 else '0')
-        
+                lambda x: x.split('.')[0]
+                if '.' in x and len(x.split('.')) >= 1 else '0')
+
         # Handle categorical features with consistent encoding
-        categorical_features = ['proto', 'service', 'state', 'src_subnet', 'dst_subnet']
+        categorical_features = [
+            'proto', 'service', 'state', 'src_subnet', 'dst_subnet'
+        ]
         for feature in categorical_features:
             # Ensure label encoder exists for this feature
             if feature not in self.label_encoders:
@@ -106,57 +114,69 @@ class LGBMClassifier:
                 if feature == 'proto':
                     values = ['tcp', 'udp', 'icmp', 'other', 'unknown']
                 elif feature == 'service':
-                    values = ['http', 'ftp', 'smtp', 'ssh', 'dns', 'ftp-data', 
-                              'other', 'unknown']
+                    values = [
+                        'http', 'ftp', 'smtp', 'ssh', 'dns', 'ftp-data',
+                        'other', 'unknown'
+                    ]
                 elif feature == 'state':
                     values = ['established', 'other', 'unknown']
                 else:  # subnet features
                     values = [str(i) for i in range(256)] + ['unknown']
-                    
+
                 self.label_encoders[feature].fit(values)
-            
+
             # Transform with safe handling of unknown values
             try:
-                result_df[feature] = self.label_encoders[feature].transform(result_df[feature].astype(str))
+                result_df[feature] = self.label_encoders[feature].transform(
+                    result_df[feature].astype(str))
             except Exception:
                 # Find which values are not in the encoder and set them to 'unknown'
                 for i, val in enumerate(result_df[feature]):
                     if val not in self.label_encoders[feature].classes_:
                         result_df.loc[i, feature] = 'unknown'
-                
+
                 # Try again after handling unknown values
                 try:
-                    result_df[feature] = self.label_encoders[feature].transform(result_df[feature].astype(str))
+                    result_df[feature] = self.label_encoders[
+                        feature].transform(result_df[feature].astype(str))
                 except Exception as e:
                     # Last resort - add unknown2 class to handle any remaining issues
                     if 'unknown2' not in self.label_encoders[feature].classes_:
                         self.label_encoders[feature].classes_ = np.append(
-                            self.label_encoders[feature].classes_, ['unknown2'])
+                            self.label_encoders[feature].classes_,
+                            ['unknown2'])
                     result_df[feature] = 'unknown2'
-                    result_df[feature] = self.label_encoders[feature].transform(result_df[feature].astype(str))
-        
+                    result_df[feature] = self.label_encoders[
+                        feature].transform(result_df[feature].astype(str))
+
         # Convert all numeric columns to float
-        numeric_cols = [col for col in result_df.columns 
-                      if col not in categorical_features and col not in ['src_ip', 'dst_ip']]
+        numeric_cols = [
+            col for col in result_df.columns if col not in categorical_features
+            and col not in ['src_ip', 'dst_ip']
+        ]
         for col in numeric_cols:
-            result_df[col] = pd.to_numeric(result_df[col], errors='coerce').fillna(0)
-        
+            result_df[col] = pd.to_numeric(result_df[col],
+                                           errors='coerce').fillna(0)
+
         # Keep only needed columns in consistent order
         exclude_cols = ['src_ip', 'dst_ip', 'attack_cat', 'label']
-        feature_cols = [col for col in result_df.columns if col not in exclude_cols]
-        
+        feature_cols = [
+            col for col in result_df.columns if col not in exclude_cols
+        ]
+
         # Store consistent feature ordering if not already set
         if not hasattr(self, 'feature_names_') or self.feature_names_ is None:
             self.feature_names_ = feature_cols
-        
+
         # Extract features in the same order they were during training
         result_df_ordered = pd.DataFrame(index=result_df.index)
         for feature in self.feature_names_:
             if feature in result_df.columns:
                 result_df_ordered[feature] = result_df[feature]
             else:
-                result_df_ordered[feature] = 0  # Default value for missing features
-        
+                result_df_ordered[
+                    feature] = 0  # Default value for missing features
+
         # Handle scaling
         from sklearn.utils.validation import check_is_fitted
         try:
@@ -164,7 +184,7 @@ class LGBMClassifier:
         except:
             # If not fitted, fit the scaler on this data
             self.scaler.fit(result_df_ordered)
-        
+
         # Apply scaling
         result_scaled = self.scaler.transform(result_df_ordered)
         return pd.DataFrame(result_scaled, columns=self.feature_names_)
@@ -226,15 +246,24 @@ class LGBMClassifier:
                             for label, group in grouped:
                                 if len(group) == 1:
                                     # Duplicate the single sample but reset index to avoid duplicates
-                                    group_copy = group.copy().reset_index(drop=True)
-                                    group_copy2 = group.copy().reset_index(drop=True)
-                                    X_balanced = pd.concat([X_balanced, group_copy, group_copy2], ignore_index=True)
+                                    group_copy = group.copy().reset_index(
+                                        drop=True)
+                                    group_copy2 = group.copy().reset_index(
+                                        drop=True)
+                                    X_balanced = pd.concat(
+                                        [X_balanced, group_copy, group_copy2],
+                                        ignore_index=True)
                                     y_balanced.extend([label, label])
                                 else:
                                     # Take the first 2 samples
                                     # Take existing samples (at least 2)
-                                    X_balanced = pd.concat([X_balanced, group.head(2).reset_index(drop=True)], ignore_index=True)
-                                    y_balanced.extend([label] * min(2, len(group)))
+                                    X_balanced = pd.concat([
+                                        X_balanced,
+                                        group.head(2).reset_index(drop=True)
+                                    ],
+                                                           ignore_index=True)
+                                    y_balanced.extend([label] *
+                                                      min(2, len(group)))
 
                             # Create a clean feature set from the balanced data
                             X = X_balanced.copy().reset_index(drop=True)
@@ -247,10 +276,11 @@ class LGBMClassifier:
                             y = np.array(y_balanced)
                         else:
                             # Reset index to avoid duplicates
-                            sample_data_reset = sample_data.reset_index(drop=True)
+                            sample_data_reset = sample_data.reset_index(
+                                drop=True)
                             X = sample_data_reset.drop(['label', 'attack_cat'],
-                                                 axis=1,
-                                                 errors='ignore')
+                                                       axis=1,
+                                                       errors='ignore')
                             self.feature_names_ = list(X.columns)
                             y = sample_data_reset['label']
 
@@ -261,7 +291,7 @@ class LGBMClassifier:
 
         # Fallback: Create synthetic data for model initialization with all required features
         # Note: This is just to initialize the model structure, not for actual predictions
-        feature_names: list[str] = [
+        feature_names = [
             'dur', 'sbytes', 'dbytes', 'sttl', 'dttl', 'rate', 'sload',
             'dload', 'sinpkt', 'dinpkt', 'proto', 'service', 'src_subnet',
             'dst_subnet'
@@ -361,10 +391,20 @@ class LGBMClassifier:
         precision, recall, f1, _ = precision_recall_fscore_support(
             y_test, y_pred, average='weighted')
 
-        # Create multi-class ROC AUC
-        y_test_bin = np.zeros((len(y_test), len(np.unique(y))))
-        for i, val in enumerate(y_test):
-            y_test_bin[i, val] = 1
+        # Create multi-class ROC AU
+
+        lb = LabelBinarizer()
+        lb.fit(list(
+            self.attack_categories.keys()))  # Fit with all known classes
+        if y_proba.shape[1] > 1:
+            roc_auc = roc_auc_score(y_test_bin,
+                                    y_proba,
+                                    multi_class='ovr',
+                                    average='weighted')
+        else:
+            roc_auc = 0.0
+
+        y_test_bin = lb.transform(y_test)
 
         if y_proba.shape[1] > 1:
             roc_auc = roc_auc_score(y_test_bin,
