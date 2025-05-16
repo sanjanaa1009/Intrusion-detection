@@ -2,6 +2,14 @@
 
 This project implements an **Intrusion Detection System (IDS)** that combines **Blockchain** for immutable logging and **Machine Learning (ML)** models for anomaly detection. The system aims to detect suspicious activities, such as unauthorized access or malicious activity, by analyzing system logs and using blockchain technology to secure and verify the logs.
 
+## 🎬 Project Demo & Presentation
+
+**Watch the Prototype Demo**  
+[![Watch Video](https://img.shields.io/badge/Demo-YouTube-red?logo=youtube)](https://youtu.be/bwHZfG8cHIM)
+
+**View Project PPT**  
+[📎 Download Presentation (PDF)](https://drive.google.com/file/d/1yt0gIhuPcKrRoOxBypLFRgCT3vZp9--L/view?usp=sharing)
+
 ## 🛠️ Technologies Used
 - **Blockchain** (e.g., Ethereum or Hyperledger for secure log storage)
 - **Machine Learning** (e.g., LightGBM, Random Forest, SVM, etc. for anomaly detection)
@@ -33,12 +41,23 @@ This system performs the following key tasks:
 4. **Blockchain Integration**: Any detected intrusion is recorded on the blockchain, ensuring that the logs cannot be tampered with.
 5. **Alert Generation**: Real-time alerts are generated when an intrusion is detected.
 
-## 🧑‍💻 Installation
+## 🧑‍💻 Installation & Setup
 
-To set up the project locally:
-
-1. **Clone the repository:**
-
-```bash
+# 1. Clone the Repository
+```
 git clone https://github.com/your-username/intrusion-detection.git
 cd intrusion-detection
+```
+# 2. Create and Activate Virtual Environment
+```
+python -m venv env
+source env/bin/activate   # On Windows: env\Scripts\activate
+```
+# 3. Install Dependencies
+```
+pip install -r requirements.txt
+```
+# 4. Run the Streamlit App
+```
+streamlit run app.py
+```
