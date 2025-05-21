@@ -1,0 +1,13 @@
+# Ignore virtual environments (just in case you add one later)
+env/
+venv/
+.venv/
+*.joblib
+lgbm_model.joblib
+
+creds/my-service-account.json
+*.json
+__pycache__/
+*.py[cod]
+.vscode/
+.streamlit/secrets.toml
