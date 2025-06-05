@@ -6,6 +6,7 @@ import os
 import joblib
 import warnings
 from typing import Dict, List, Tuple, Union
+import streamlit as st
 
 # We'll use the RandomForest model since LightGBM has dependency issues
 class LGBMAttackClassifier:
@@ -275,7 +276,10 @@ class LGBMAttackClassifier:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Model file not found: {filepath}")
         
-        model_data = joblib.load(filepath)
+        try:
+         model_data = joblib.load("lgbm_model.joblib")
+        except Exception as e:
+         st.error(f"Failed to load model: {e}")
         
         self.model = model_data.get('model')
         self.model_type = model_data.get('model_type', 'rf')  # Default to rf for older models
