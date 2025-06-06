@@ -2,8 +2,7 @@
 env/
 venv/
 .venv/
-*.joblib
-lgbm_model.joblib
+
 
 creds/my-service-account.json
 *.json
