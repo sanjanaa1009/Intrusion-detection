@@ -278,12 +278,13 @@ class LGBMAttackClassifier:
         
         try:
          model_data = joblib.load("lgbm_model.joblib")
+         
+         self.model = model_data.get('model')
+         self.model_type = model_data.get('model_type', 'rf')  # Default to rf for older models
+         self.feature_columns = model_data.get('feature_columns')
+         self.label_encoder = model_data.get('label_encoder')
+         self.scaler = model_data.get('scaler')
+         self.categorical_features = model_data.get('categorical_features', ['proto', 'service', 'state'])
         except Exception as e:
          st.error(f"Failed to load model: {e}")
         
-        self.model = model_data.get('model')
-        self.model_type = model_data.get('model_type', 'rf')  # Default to rf for older models
-        self.feature_columns = model_data.get('feature_columns')
-        self.label_encoder = model_data.get('label_encoder')
-        self.scaler = model_data.get('scaler')
-        self.categorical_features = model_data.get('categorical_features', ['proto', 'service', 'state'])
