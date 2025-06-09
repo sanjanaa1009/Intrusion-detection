@@ -1,5 +1,5 @@
 # Ignore virtual environments (just in case you add one later)
-env/
+.env/
 venv/
 .venv/
 
