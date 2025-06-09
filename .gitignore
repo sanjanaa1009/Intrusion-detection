@@ -3,7 +3,7 @@
 venv/
 .venv/
 
-
+.env
 creds/my-service-account.json
 *.json
 __pycache__/
