@@ -11,12 +11,12 @@ This project implements an **Intrusion Detection System (IDS)** that combines **
 [📎 Download Presentation (PDF)](https://drive.google.com/file/d/1yt0gIhuPcKrRoOxBypLFRgCT3vZp9--L/view?usp=sharing)
 
 ## 🛠️ Technologies Used
-- **Blockchain** (e.g., Ethereum or Hyperledger for secure log storage)
+- **Blockchain** (custom bockchain class)
 - **Machine Learning** (e.g., LightGBM, Random Forest, SVM, etc. for anomaly detection)
 - **Python** (for implementing ML models and blockchain integration)
 - **Flask/FastAPI** (for building the backend API)
 - **Pandas** & **Scikit-learn** (for data processing and model building)
-- **SQL/NoSQL** (for storing user data, logs, and model results)
+- **SQL** (for storing user data, logs, and model results)
 
 ## 📈 Overview
 
@@ -28,7 +28,7 @@ This system performs the following key tasks:
 5. **Real-time Detection**: Continuously analyzes incoming logs for intrusions and records the results on the blockchain.
 
 ## 🚀 Features
-- **Real-time Log Monitoring**: The system can detect suspicious activity in real-time.
+- **Log Monitoring**: The system can detect suspicious activity in by monitoring the logs.
 - **ML Anomaly Detection**: Uses machine learning models to identify unusual patterns or attacks.
 - **Blockchain Logging**: All intrusion events are logged on the blockchain for secure and immutable record-keeping.
 - **Scalability**: The system is designed to be scalable to handle large amounts of log data.
